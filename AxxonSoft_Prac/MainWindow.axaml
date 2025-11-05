@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="AxxonSoft_Prac.MainWindow"
+        Title="Tesseract 4D" Width="900" Height="700">
+    <Canvas>
+        <Canvas x:Name="DrawCanvas" Width="900" Height="600" Background="#1a1a1a"/>
+
+        <RadioButton x:Name="RadioX" Content="Rotation X" Canvas.Left="50" Canvas.Top="620" GroupName="Axis"/>
+        <RadioButton x:Name="RadioY" Content="Rotation Y" Canvas.Left="180" Canvas.Top="620" GroupName="Axis"/>
+        <RadioButton x:Name="RadioZ" Content="Rotation Z" Canvas.Left="310" Canvas.Top="620" GroupName="Axis"/>
+        <RadioButton x:Name="RadioAuto" Content="Auto" Canvas.Left="440" Canvas.Top="620" GroupName="Axis" IsChecked="True"/>
+        
+        <Button x:Name="BtnStart" Content="Start" Width="80" Canvas.Left="600" Canvas.Top="615" Click="BtnStart_Click"/>
+        <Button x:Name="BtnStop" Content="Stop" Width="80" Canvas.Left="690" Canvas.Top="615" Click="BtnStop_Click"/>
+        <Button x:Name="BtnReset" Content="Reset" Width="80" Canvas.Left="780" Canvas.Top="615" Click="BtnReset_Click"/>
+    </Canvas>
+</Window>
