@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="AxxonSoft_Prac.MainWindow"
+        CanResize = "false"
         Title="Tesseract 4D" Width="900" Height="700">
     <Canvas>
         <Canvas x:Name="DrawCanvas" Width="900" Height="600" Background="#1a1a1a"/>
