@@ -1,18 +1,92 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="AxxonSoft_Prac.MainWindow"
-        CanResize = "false"
-        Title="Tesseract 4D" Width="900" Height="700">
-    <Canvas>
-        <Canvas x:Name="DrawCanvas" Width="900" Height="600" Background="#1a1a1a"/>
-
-        <RadioButton x:Name="RadioX" Content="Rotation X" Canvas.Left="50" Canvas.Top="620" GroupName="Axis"/>
-        <RadioButton x:Name="RadioY" Content="Rotation Y" Canvas.Left="180" Canvas.Top="620" GroupName="Axis"/>
-        <RadioButton x:Name="RadioZ" Content="Rotation Z" Canvas.Left="310" Canvas.Top="620" GroupName="Axis"/>
-        <RadioButton x:Name="RadioAuto" Content="Auto" Canvas.Left="440" Canvas.Top="620" GroupName="Axis" IsChecked="True"/>
+        Title="Tesseract 4D"
+        Width="1000" Height="800"
+        MinWidth="700" MinHeight="600"
+        CanResize="True">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
         
-        <Button x:Name="BtnStart" Content="Start" Width="80" Canvas.Left="600" Canvas.Top="615" Click="BtnStart_Click"/>
-        <Button x:Name="BtnStop" Content="Stop" Width="80" Canvas.Left="690" Canvas.Top="615" Click="BtnStop_Click"/>
-        <Button x:Name="BtnReset" Content="Reset" Width="80" Canvas.Left="780" Canvas.Top="615" Click="BtnReset_Click"/>
-    </Canvas>
+        <Canvas x:Name="DrawCanvas" Grid.Row="0" Background="#1a1a1a" ClipToBounds="True"/>
+        
+        <Grid Grid.Row="1" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,5">
+                <RadioButton x:Name="RadioX" Content="Rotation X" GroupName="Axis" Margin="5"/>
+                <RadioButton x:Name="RadioY" Content="Rotation Y" GroupName="Axis" Margin="5"/>
+                <RadioButton x:Name="RadioZ" Content="Rotation Z" GroupName="Axis" Margin="5"/>
+                <RadioButton x:Name="RadioAuto" Content="Auto" GroupName="Axis" Margin="5" IsChecked="True"/>
+            </StackPanel>
+            
+            <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,5,0,5">
+                <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+                    <StackPanel Orientation="Vertical" Margin="0,0,15,0">
+                        <TextBlock Text="Speed:" VerticalAlignment="Center" Margin="0,0,0,2"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Slider x:Name="SpeedSlider" Minimum="0.001" Maximum="0.05" Value="0.01" Width="120" Margin="0,0,5,0" ToolTip.Tip="Rotation Speed"/>
+                            <TextBlock x:Name="SpeedValue" Text="0.01" VerticalAlignment="Center" Width="40" FontSize="11" Foreground="#888"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Vertical" Margin="0,0,15,0">
+                        <TextBlock Text="Size:" VerticalAlignment="Center" Margin="0,0,0,2"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Slider x:Name="SizeSlider" Minimum="50" Maximum="150" Value="100" Width="120" Margin="0,0,5,0" ToolTip.Tip="Tesseract Size"/>
+                            <TextBlock x:Name="SizeValue" Text="100" VerticalAlignment="Center" Width="40" FontSize="11" Foreground="#888"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Vertical" Margin="0,0,15,0">
+                        <TextBlock Text="Projection Dist:" VerticalAlignment="Center" Margin="0,0,0,2"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Slider x:Name="ProjectionDistSlider" Minimum="200" Maximum="800" Value="400" Width="120" Margin="0,0,5,0" ToolTip.Tip="Projection Distance"/>
+                            <TextBlock x:Name="ProjectionDistValue" Text="400" VerticalAlignment="Center" Width="40" FontSize="11" Foreground="#888"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Vertical" Margin="0,0,0,0">
+                        <TextBlock Text="Projection Scale:" VerticalAlignment="Center" Margin="0,0,0,2"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Slider x:Name="ProjectionScaleSlider" Minimum="150" Maximum="400" Value="300" Width="120" Margin="0,0,5,0" ToolTip.Tip="Projection Scale"/>
+                            <TextBlock x:Name="ProjectionScaleValue" Text="300" VerticalAlignment="Center" Width="40" FontSize="11" Foreground="#888"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,2" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" Margin="0,0,15,0">
+                        <TextBlock Text="Vertex Size:" VerticalAlignment="Center" Margin="0,0,0,2"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Slider x:Name="VertexSizeSlider" Minimum="2" Maximum="12" Value="6" Width="120" Margin="0,0,5,0" ToolTip.Tip="Vertex Size"/>
+                            <TextBlock x:Name="VertexSizeValue" Text="6" VerticalAlignment="Center" Width="40" FontSize="11" Foreground="#888"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Vertical" Margin="0,0,10,0">
+                        <TextBlock Text="Edge Color:" VerticalAlignment="Center" Margin="0,0,0,2"/>
+                        <Button x:Name="ChangeEdgeColorButton" Content="Change" Width="120" Margin="0"/>
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Vertical" Margin="0,0,0,0">
+                        <TextBlock Text="Vertex Color:" VerticalAlignment="Center" Margin="0,0,0,2"/>
+                        <Button x:Name="ChangeVertexColorButton" Content="Change" Width="120" Margin="0"/>
+                    </StackPanel>
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                    <Button x:Name="BtnStart" Content="Start" Width="80" Margin="5"/>
+                    <Button x:Name="BtnStop" Content="Stop" Width="80" Margin="5"/>
+                    <Button x:Name="BtnReset" Content="Reset" Width="80" Margin="5"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Grid>
 </Window>

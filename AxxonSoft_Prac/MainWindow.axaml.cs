@@ -1,205 +1,278 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using Avalonia.Threading;
 using System;
 
 namespace AxxonSoft_Prac
 {
     public partial class MainWindow : Window
     {
-        private DispatcherTimer timer;
-        private double angleXY = 0, angleXZ = 0, angleXW = 0;
-        private double angleYZ = 0, angleYW = 0, angleZW = 0;
+        // --- Логические компоненты ---
+        private TesseractModel _tesseractModel;
+        private TesseractRotationCalculator _rotationCalculator;
+        private TesseractRenderer _renderer;
 
-        private double[,] vertices4D = new double[16, 4];
-
+        // --- UI компоненты ---
         private Canvas _drawCanvas;
         private RadioButton _radioX;
         private RadioButton _radioY;
         private RadioButton _radioZ;
         private RadioButton _radioAuto;
+        private Button _btnStart;
+        private Button _btnStop;
+        private Button _btnReset;
+        private Slider _speedSlider;
+        private Slider _sizeSlider;
+        private Slider _projectionDistSlider;
+        private Slider _projectionScaleSlider;
+        private Slider _vertexSizeSlider;
+        private Button _changeEdgeColorButton;
+        private Button _changeVertexColorButton;
+        // Текстовые блоки для значений
+        private TextBlock _speedValue;
+        private TextBlock _sizeValue;
+        private TextBlock _projectionDistValue;
+        private TextBlock _projectionScaleValue;
+        private TextBlock _vertexSizeValue;
+        
+       
+
+       
+        private bool _isAnimating = false;
+
+        
+        private int _currentEdgeColorIndex = 0;
+        private int _currentVertexColorIndex = 0;
 
         public MainWindow()
         {
             InitializeComponent();
+            FindUIElements();
+            InitializeLogic();
+            SetupEventHandlers();
+            SetSliderValuesFromSettings();
+            StartAnimationLoop();
+        }
 
+        private void FindUIElements()
+        {
             _drawCanvas = this.FindControl<Canvas>("DrawCanvas");
             _radioX = this.FindControl<RadioButton>("RadioX");
             _radioY = this.FindControl<RadioButton>("RadioY");
             _radioZ = this.FindControl<RadioButton>("RadioZ");
             _radioAuto = this.FindControl<RadioButton>("RadioAuto");
+            _btnStart = this.FindControl<Button>("BtnStart");
+            _btnStop = this.FindControl<Button>("BtnStop");
+            _btnReset = this.FindControl<Button>("BtnReset");
+            _speedSlider = this.FindControl<Slider>("SpeedSlider");
+            _sizeSlider = this.FindControl<Slider>("SizeSlider");
+            _projectionDistSlider = this.FindControl<Slider>("ProjectionDistSlider");
+            _projectionScaleSlider = this.FindControl<Slider>("ProjectionScaleSlider");
+            _vertexSizeSlider = this.FindControl<Slider>("VertexSizeSlider");
+            _changeEdgeColorButton = this.FindControl<Button>("ChangeEdgeColorButton");
+            _changeVertexColorButton = this.FindControl<Button>("ChangeVertexColorButton");
 
-            InitializeTesseract();
+            // Текстовые блоки для значений
+            _speedValue = this.FindControl<TextBlock>("SpeedValue");
+            _sizeValue = this.FindControl<TextBlock>("SizeValue");
+            _projectionDistValue = this.FindControl<TextBlock>("ProjectionDistValue");
+            _projectionScaleValue = this.FindControl<TextBlock>("ProjectionScaleValue");
+            _vertexSizeValue = this.FindControl<TextBlock>("VertexSizeValue");
 
-            timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(30);
-            timer.Tick += Timer_Tick;
-            timer.Start();
+            
+            
         }
 
-        private void InitializeTesseract()
+        private void InitializeLogic()
         {
-            int index = 0;
-            for (int i = 0; i < 2; i++)
-                for (int j = 0; j < 2; j++)
-                    for (int k = 0; k < 2; k++)
-                        for (int l = 0; l < 2; l++)
-                        {
-                            vertices4D[index, 0] = (i * 2 - 1) * 100;
-                            vertices4D[index, 1] = (j * 2 - 1) * 100;
-                            vertices4D[index, 2] = (k * 2 - 1) * 100;
-                            vertices4D[index, 3] = (l * 2 - 1) * 100;
-                            index++;
-                        }
+            _tesseractModel = new TesseractModel();
+            _rotationCalculator = new TesseractRotationCalculator(_tesseractModel);
+            _renderer = new TesseractRenderer(_drawCanvas, _tesseractModel);
         }
 
-        private void Timer_Tick(object sender, EventArgs e)
+        private void SetupEventHandlers()
         {
-            if (_radioX.IsChecked == true)
-            {
-                angleXY += 0.02;
-                angleXZ += 0.02;
-                angleXW += 0.02;
-            }
-            else if (_radioY.IsChecked == true)
-            {
-                angleXY += 0.02;
-                angleYZ += 0.02;
-                angleYW += 0.02;
-            }
-            else if (_radioZ.IsChecked == true)
-            {
-                angleXZ += 0.02;
-                angleYZ += 0.02;
-                angleZW += 0.02;
-            }
-            else if (_radioAuto.IsChecked == true)
-            {
-                angleXY += 0.01;
-                angleXZ += 0.012;
-                angleXW += 0.008;
-                angleYZ += 0.011;
-                angleYW += 0.009;
-                angleZW += 0.007;
-            }
+            _btnStart.Click += BtnStart_Click;
+            _btnStop.Click += BtnStop_Click;
+            _btnReset.Click += BtnReset_Click;
 
-            _drawCanvas.InvalidateVisual();
-            DrawTesseract();
+            _radioX.Click += RadioX_Click;
+            _radioY.Click += RadioY_Click;
+            _radioZ.Click += RadioZ_Click;
+            _radioAuto.Click += RadioAuto_Click;
+
+            _changeEdgeColorButton.Click += ChangeEdgeColorButton_Click;
+            _changeVertexColorButton.Click += ChangeVertexColorButton_Click;
+
+            // Обработчики для слайдеров
+            _speedSlider.ValueChanged += SpeedSlider_ValueChanged;
+            _sizeSlider.ValueChanged += SizeSlider_ValueChanged;
+            _projectionDistSlider.ValueChanged += ProjectionDistSlider_ValueChanged;
+            _projectionScaleSlider.ValueChanged += ProjectionScaleSlider_ValueChanged;
+            _vertexSizeSlider.ValueChanged += VertexSizeSlider_ValueChanged;
+
+           
         }
 
-        private void DrawTesseract()
+        private void SetSliderValuesFromSettings()
         {
-            _drawCanvas.Children.Clear();
+            _speedSlider.Value = TesseractSettings.BaseRotationSpeed;
+            _sizeSlider.Value = TesseractSettings.TesseractBaseSize;
+            _projectionDistSlider.Value = TesseractSettings.ProjectionDistance;
+            _projectionScaleSlider.Value = TesseractSettings.ProjectionScale;
+            _vertexSizeSlider.Value = TesseractSettings.VertexSize;
 
-            double centerX = _drawCanvas.Width / 2;
-            double centerY = _drawCanvas.Height / 2;
-
-            double[,] rotated = new double[16, 4];
-            for (int i = 0; i < 16; i++)
-            {
-                double x = vertices4D[i, 0];
-                double y = vertices4D[i, 1];
-                double z = vertices4D[i, 2];
-                double w = vertices4D[i, 3];
-
-                double x1 = x * Math.Cos(angleXY) - y * Math.Sin(angleXY);
-                double y1 = x * Math.Sin(angleXY) + y * Math.Cos(angleXY);
-                double z1 = z;
-                double w1 = w;
-
-                double x2 = x1 * Math.Cos(angleXZ) - z1 * Math.Sin(angleXZ);
-                double z2 = x1 * Math.Sin(angleXZ) + z1 * Math.Cos(angleXZ);
-                double y2 = y1;
-                double w2 = w1;
-
-                double x3 = x2 * Math.Cos(angleXW) - w2 * Math.Sin(angleXW);
-                double w3 = x2 * Math.Sin(angleXW) + w2 * Math.Cos(angleXW);
-                double y3 = y2;
-                double z3 = z2;
-
-                double y4 = y3 * Math.Cos(angleYZ) - z3 * Math.Sin(angleYZ);
-                double z4 = y3 * Math.Sin(angleYZ) + z3 * Math.Cos(angleYZ);
-                double x4 = x3;
-                double w4 = w3;
-
-                double y5 = y4 * Math.Cos(angleYW) - w4 * Math.Sin(angleYW);
-                double w5 = y4 * Math.Sin(angleYW) + w4 * Math.Cos(angleYW);
-                double x5 = x4;
-                double z5 = z4;
-
-                double z6 = z5 * Math.Cos(angleZW) - w5 * Math.Sin(angleZW);
-                double w6 = z5 * Math.Sin(angleZW) + w5 * Math.Cos(angleZW);
-
-                rotated[i, 0] = x5;
-                rotated[i, 1] = y5;
-                rotated[i, 2] = z6;
-                rotated[i, 3] = w6;
-            }
-
-            double[,] projected = new double[16, 2];
-            for (int i = 0; i < 16; i++)
-            {
-                double distance = 400;
-                double w = rotated[i, 3];
-                double factor = distance / (distance + w);
-
-                double x3d = rotated[i, 0] * factor;
-                double y3d = rotated[i, 1] * factor;
-                double z3d = rotated[i, 2] * factor;
-
-                double scale = 300 / (300 + z3d);
-                projected[i, 0] = x3d * scale + centerX;
-                projected[i, 1] = y3d * scale + centerY;
-            }
-
-            var edges = new (int, int)[]
-            {
-                (0,1), (0,2), (0,4), (0,8), (1,3), (1,5), (1,9), (2,3), (2,6), (2,10),
-                (3,7), (3,11), (4,5), (4,6), (4,12), (5,7), (5,13), (6,7), (6,14),
-                (7,15), (8,9), (8,10), (8,12), (9,11), (9,13), (10,11), (10,14),
-                (11,15), (12,13), (12,14), (13,15), (14,15)
-            };
-
-            foreach (var (from, to) in edges)
-            {
-                var line = new Avalonia.Controls.Shapes.Line
-                {
-                    StartPoint = new Avalonia.Point(projected[from, 0], projected[from, 1]),
-                    EndPoint = new Avalonia.Point(projected[to, 0], projected[to, 1]),
-                    Stroke = Brushes.Cyan,
-                    StrokeThickness = 1.5
-                };
-                _drawCanvas.Children.Add(line);
-            }
-
-            for (int i = 0; i < 16; i++)
-            {
-                var ellipse = new Avalonia.Controls.Shapes.Ellipse
-                {
-                    Width = 6,
-                    Height = 6,
-                    Fill = Brushes.White
-                };
-                Canvas.SetLeft(ellipse, projected[i, 0] - 3);
-                Canvas.SetTop(ellipse, projected[i, 1] - 3);
-                _drawCanvas.Children.Add(ellipse);
-            }
+            
+            _speedValue.Text = TesseractSettings.BaseRotationSpeed.ToString("F3");
+            _sizeValue.Text = TesseractSettings.TesseractBaseSize.ToString("F0");
+            _projectionDistValue.Text = TesseractSettings.ProjectionDistance.ToString("F0");
+            _projectionScaleValue.Text = TesseractSettings.ProjectionScale.ToString("F0");
+            _vertexSizeValue.Text = TesseractSettings.VertexSize.ToString("F0");
         }
+
+       
+
+        private void StartAnimationLoop()
+        {
+            if (_isAnimating) return;
+            _isAnimating = true;
+            RequestNextFrame();
+        }
+
+        private void StopAnimationLoop()
+        {
+            _isAnimating = false;
+        }
+
+        private void RequestNextFrame()
+        {
+            if (!_isAnimating) return;
+
+            var topLevel = TopLevel.GetTopLevel(this);
+            topLevel?.RequestAnimationFrame(timestamp =>
+            {
+                _rotationCalculator.Update();
+                _renderer.Update();
+                RequestNextFrame();
+            });
+        }
+
+       
 
         private void BtnStart_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            timer.Start();
+            StartAnimationLoop();
         }
 
         private void BtnStop_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            timer.Stop();
+            StopAnimationLoop();
         }
 
         private void BtnReset_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            angleXY = angleXZ = angleXW = angleYZ = angleYW = angleZW = 0;
-            DrawTesseract();
+            _rotationCalculator.Reset();
+        }
+
+        private void RadioX_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (_radioX.IsChecked == true)
+                _rotationCalculator.CurrentMode = RotationMode.ManualX;
+        }
+
+        private void RadioY_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (_radioY.IsChecked == true)
+                _rotationCalculator.CurrentMode = RotationMode.ManualY;
+        }
+
+        private void RadioZ_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (_radioZ.IsChecked == true)
+                _rotationCalculator.CurrentMode = RotationMode.ManualZ;
+        }
+
+        private void RadioAuto_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (_radioAuto.IsChecked == true)
+                _rotationCalculator.CurrentMode = RotationMode.Auto;
+        }
+
+        private void ChangeEdgeColorButton_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+           
+            _currentEdgeColorIndex = (_currentEdgeColorIndex + 1) % TesseractSettings.EdgeColorPalette.Length;
+            TesseractSettings.EdgeColor = TesseractSettings.EdgeColorPalette[_currentEdgeColorIndex];
+            
+            _drawCanvas.Children.Clear();
+            _renderer = new TesseractRenderer(_drawCanvas, _tesseractModel);
+        }
+
+        private void ChangeVertexColorButton_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+           
+            _currentVertexColorIndex = (_currentVertexColorIndex + 1) % TesseractSettings.VertexColorPalette.Length;
+            TesseractSettings.VertexColor = TesseractSettings.VertexColorPalette[_currentVertexColorIndex];
+            
+            _drawCanvas.Children.Clear();
+            _renderer = new TesseractRenderer(_drawCanvas, _tesseractModel);
+        }
+
+
+
+
+        private void SpeedSlider_ValueChanged(object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        {
+            TesseractSettings.BaseRotationSpeed = e.NewValue;
+            if (_speedValue != null)
+                _speedValue.Text = e.NewValue.ToString("F3");
+        }
+
+        private void SizeSlider_ValueChanged(object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        {
+            TesseractSettings.TesseractBaseSize = e.NewValue;
+            if (_sizeValue != null)
+                _sizeValue.Text = e.NewValue.ToString("F0");
+            
+            _tesseractModel = new TesseractModel(); 
+           
+            _rotationCalculator = new TesseractRotationCalculator(_tesseractModel);
+            _drawCanvas.Children.Clear();
+            _renderer = new TesseractRenderer(_drawCanvas, _tesseractModel);
+          
+            _rotationCalculator.Reset();
+        }
+
+        private void ProjectionDistSlider_ValueChanged(object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        {
+            TesseractSettings.ProjectionDistance = e.NewValue;
+            if (_projectionDistValue != null)
+                _projectionDistValue.Text = e.NewValue.ToString("F0");
+        }
+
+        private void ProjectionScaleSlider_ValueChanged(object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        {
+            TesseractSettings.ProjectionScale = e.NewValue;
+            if (_projectionScaleValue != null)
+                _projectionScaleValue.Text = e.NewValue.ToString("F0");
+        }
+
+        private void VertexSizeSlider_ValueChanged(object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        {
+            TesseractSettings.VertexSize = e.NewValue;
+            if (_vertexSizeValue != null)
+                _vertexSizeValue.Text = e.NewValue.ToString("F0");
+            
+            _drawCanvas.Children.Clear();
+            _renderer = new TesseractRenderer(_drawCanvas, _tesseractModel); 
+        }
+
+        
+        
+        protected override void OnClosed(EventArgs e)
+        {
+            StopAnimationLoop();
+            base.OnClosed(e);
         }
     }
 }
