@@ -24,6 +24,7 @@
                 <RadioButton x:Name="RadioY" Content="Rotation Y" GroupName="Axis" Margin="5"/>
                 <RadioButton x:Name="RadioZ" Content="Rotation Z" GroupName="Axis" Margin="5"/>
                 <RadioButton x:Name="RadioAuto" Content="Auto" GroupName="Axis" Margin="5" IsChecked="True"/>
+                <RadioButton x:Name="RadioManual" Content="Manual" GroupName="Axis" Margin="5"/>
             </StackPanel>
             
             <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,5,0,5">

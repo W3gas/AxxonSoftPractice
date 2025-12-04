@@ -33,7 +33,9 @@ namespace AxxonSoft_Prac
         // Размер точки
         public static double VertexSize { get; set; } = 6.0;
 
-        
+        public static double StrokeThickness { get; set; } =1.5;
+
+
 
         // Базовый размер тессеракта (половина длины стороны в 4D)
         public static double TesseractBaseSize { get; set; } = 100.0;
@@ -53,5 +55,19 @@ namespace AxxonSoft_Prac
         public const double MaxProjectionScale = 400.0;
         public const double MinVertexSize = 2.0;
         public const double MaxVertexSize = 12.0;
+
+
+
+        // Чувствительность ручного вращения (в радианах на пиксель)
+        public static double ManualDragSensitivity { get; set; } = 0.01;
+
+        // Коэффициенты для 4D-компонент в основном режиме (относительно основного)
+        public static double ManualDragZWFactor { get; set; } = 0.7;
+        public static double ManualDragYWFactor { get; set; } = 0.7;
+
+        // Чувствительность альтернативного режима
+        public static double ManualDragAlternateSensitivity { get; set; } = 0.01;
+
+
     }
 }

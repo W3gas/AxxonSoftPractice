@@ -10,8 +10,8 @@ namespace AxxonSoft_Prac
        
         private readonly Canvas _canvas;
         private readonly TesseractModel _model;
-        private Line[] _lines;
-        private Ellipse[] _points;
+        private Line[] _edgeLines;
+        private Ellipse[] _vertexEllipses;
 
         // Принимаем Canvas
         public TesseractRenderer(Canvas canvas, TesseractModel model)
@@ -25,74 +25,121 @@ namespace AxxonSoft_Prac
         {
             var edges = _model.GetEdges();
             var numberOfEdges = edges.Length;
-            _lines = new Line[numberOfEdges];
+            _edgeLines = new Line[numberOfEdges];
             for (int i = 0; i < numberOfEdges; i++)
             {
-                _lines[i] = new Line
+                _edgeLines[i] = new Line
                 {
                     Stroke = new SolidColorBrush(TesseractSettings.EdgeColor),
-                    StrokeThickness = 1.5,
+                    StrokeThickness = TesseractSettings.StrokeThickness,
                     IsHitTestVisible = false
                 };
-                _canvas.Children.Add(_lines[i]);
+                _canvas.Children.Add(_edgeLines[i]);
             }
 
             var numberOfVertices = TesseractModel.NumberOfVertices;
-            _points = new Ellipse[numberOfVertices];
+            _vertexEllipses = new Ellipse[numberOfVertices];
             for (int i = 0; i < numberOfVertices; i++)
             {
-                _points[i] = new Ellipse
+                _vertexEllipses[i] = new Ellipse
                 {
                     Width = TesseractSettings.VertexSize,
                     Height = TesseractSettings.VertexSize,
                     Fill = new SolidColorBrush(TesseractSettings.VertexColor),
                     IsHitTestVisible = false
                 };
-                _canvas.Children.Add(_points[i]);
+                _canvas.Children.Add(_vertexEllipses[i]);
             }
         }
 
         public void Update()
         {
-            double[,] rotated = _model.RotatedVertices;
-
-            double centerX = _canvas.Bounds.Width / 2;
-            double centerY = _canvas.Bounds.Height / 2; 
-            double[,] projected = new double[TesseractModel.NumberOfVertices, 2];
-
-            for (int i = 0; i < TesseractModel.NumberOfVertices; i++)
+            // Skip update if canvas has no valid size yet
+            if (_canvas.Bounds.Width <= 0 || _canvas.Bounds.Height <= 0)
             {
-                double x = rotated[i, 0];
-                double y = rotated[i, 1];
-                double z = rotated[i, 2];
-                double w = rotated[i, 3];
-
-                double distance = TesseractSettings.ProjectionDistance;
-                double factor1 = distance / (distance + w);
-                double x3d = x * factor1;
-                double y3d = y * factor1;
-                double z3d = z * factor1;
-
-                double scale = TesseractSettings.ProjectionScale / (TesseractSettings.ProjectionScale + z3d);
-                double x2d = x3d * scale + centerX;
-                double y2d = y3d * scale + centerY;
-
-                projected[i, 0] = x2d;
-                projected[i, 1] = y2d;
+                return;
             }
 
-            var edges = _model.GetEdges();
-            for (int i = 0; i < edges.Length; i++)
+            try
             {
-                var (from, to) = edges[i];
-                _lines[i].StartPoint = new Avalonia.Point(projected[from, 0], projected[from, 1]);
-                _lines[i].EndPoint = new Avalonia.Point(projected[to, 0], projected[to, 1]);
+                double centerX = _canvas.Bounds.Width / 2;
+                double centerY = _canvas.Bounds.Height / 2;
+
+                double[,] rotatedVertices = _model.RotatedVertices;
+                double[,] projectedVertices = new double[TesseractModel.NumberOfVertices, 2];
+
+                for (int i = 0; i < TesseractModel.NumberOfVertices; i++)
+                {
+                    double x = rotatedVertices[i, 0];
+                    double y = rotatedVertices[i, 1];
+                    double z = rotatedVertices[i, 2];
+                    double w = rotatedVertices[i, 3];
+
+                    double distance = TesseractSettings.ProjectionDistance;
+                    // Avoid division by zero in 4D projection
+                    if (Math.Abs(distance + w) < 1e-9)
+                    {
+                        projectedVertices[i, 0] = centerX;
+                        projectedVertices[i, 1] = centerY;
+                    }
+                    else
+                    {
+                        double factor1 = distance / (distance + w);
+                        double x3d = x * factor1;
+                        double y3d = y * factor1;
+                        double z3d = z * factor1;
+
+                        double scale = TesseractSettings.ProjectionScale;
+                        // Avoid division by zero in 3D→2D projection
+                        if (Math.Abs(scale + z3d) < 1e-9)
+                        {
+                            projectedVertices[i, 0] = centerX;
+                            projectedVertices[i, 1] = centerY;
+                        }
+                        else
+                        {
+                            double factor2 = scale / (scale + z3d);
+                            double x2d = x3d * factor2 + centerX;
+                            double y2d = y3d * factor2 + centerY;
+                            projectedVertices[i, 0] = x2d;
+                            projectedVertices[i, 1] = y2d;
+                        }
+                    }
+                }
+
+                var edges = _model.GetEdges();
+                for (int i = 0; i < edges.Length; i++)
+                {
+                    var (from, to) = edges[i];
+                    _edgeLines[i].StartPoint = new Avalonia.Point(projectedVertices[from, 0], projectedVertices[from, 1]);
+                    _edgeLines[i].EndPoint = new Avalonia.Point(projectedVertices[to, 0], projectedVertices[to, 1]);
+                }
+
+                for (int i = 0; i < TesseractModel.NumberOfVertices; i++)
+                {
+                    Canvas.SetLeft(_vertexEllipses[i], projectedVertices[i, 0] - TesseractSettings.VertexSize / 2);
+                    Canvas.SetTop(_vertexEllipses[i], projectedVertices[i, 1] - TesseractSettings.VertexSize / 2);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Logger.Error("Exception occurred in TesseractRenderer.Update", ex);
+            }
+        }
+
+
+        public void UpdateColors()
+        {
+            var edgeBrush = new SolidColorBrush(TesseractSettings.EdgeColor);
+            foreach (var line in _edgeLines)
+            {
+                line.Stroke = edgeBrush;
             }
 
-            for (int i = 0; i < TesseractModel.NumberOfVertices; i++)
+            var vertexBrush = new SolidColorBrush(TesseractSettings.VertexColor);
+            foreach (var point in _vertexEllipses)
             {
-                Canvas.SetLeft(_points[i], projected[i, 0] - TesseractSettings.VertexSize / 2);
-                Canvas.SetTop(_points[i], projected[i, 1] - TesseractSettings.VertexSize / 2);
+                point.Fill = vertexBrush;
             }
         }
     }

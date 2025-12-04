@@ -14,11 +14,14 @@ namespace AxxonSoft_Prac
         // Массив для хранения исходных (невращённых) 4D-координат вершин
         private readonly double[,] _initialVertices;
 
+
         // Массив для хранения текущих вращённых 4D-координат вершин
         public double[,] RotatedVertices { get; }
 
+
         // Массив, определяющий рёбра (связи между вершинами). Каждый элемент - пара индексов
         private (int, int)[] _edges;
+
 
         // Текущие углы вращения.
         public double AngleXY { get; set; } = 0;
@@ -40,6 +43,7 @@ namespace AxxonSoft_Prac
             CopyInitialToRotated();
         }
 
+
         // Инициализация 16 вершин тессеракта в 4D пространстве
         private void InitializeVertices()
         {
@@ -57,6 +61,7 @@ namespace AxxonSoft_Prac
                         }
         }
 
+
         // Инициализация рёбер тессеракта
         private void InitializeEdges()
         {
@@ -69,6 +74,7 @@ namespace AxxonSoft_Prac
                 (11,15), (12,13), (12,14), (13,15), (14,15)
             };
         }
+
 
         // Вспомогательный метод для копирования исходных вершин в массив вращённых.
         private void CopyInitialToRotated()
@@ -90,12 +96,21 @@ namespace AxxonSoft_Prac
             return copy;
         }
 
+
         public (int, int)[] GetEdges()
         {
             var copy = new (int, int)[_edges.Length];
             Array.Copy(_edges, copy, _edges.Length);
             return copy;
         }
+
+
+        public void RegenerateVerticesFromCurrentSize()
+        {
+            InitializeVertices();
+            CopyInitialToRotated();
+        }
+
 
         public void Reset()
         {

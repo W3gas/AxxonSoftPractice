@@ -19,5 +19,7 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="MessageBox.Avalonia" Version="3.3.0" />
+    <PackageReference Include="NLog" Version="6.0.6" />
+    <PackageReference Include="NLog.Config" Version="4.7.15" />
   </ItemGroup>
 </Project>

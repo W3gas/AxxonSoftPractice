@@ -10,7 +10,8 @@ namespace AxxonSoft_Prac
         ManualX,
         ManualY,
         ManualZ,
-        Auto
+        Auto,
+        ManualDrag
     }
 
     public class TesseractRotationCalculator
@@ -62,6 +63,9 @@ namespace AxxonSoft_Prac
                     _model.AngleYW += TesseractSettings.BaseRotationSpeed * TesseractSettings.AutoRotationSpeedYW;
                     _model.AngleZW += TesseractSettings.BaseRotationSpeed * TesseractSettings.AutoRotationSpeedZW;
                     break;
+                case RotationMode.ManualDrag:
+                    //skip
+                    break;
             }
 
            
@@ -83,101 +87,270 @@ namespace AxxonSoft_Prac
             ApplyRotationMatrix(rotationMatrix, _model.GetInitialVertices(), _model.RotatedVertices);
         }
 
-        
+
+        public void ApplyCurrentRotation()
+        {
+            //  normalisation
+            _model.AngleXY = NormalizeAngle(_model.AngleXY);
+            _model.AngleXZ = NormalizeAngle(_model.AngleXZ);
+            _model.AngleXW = NormalizeAngle(_model.AngleXW);
+            _model.AngleYZ = NormalizeAngle(_model.AngleYZ);
+            _model.AngleYW = NormalizeAngle(_model.AngleYW);
+            _model.AngleZW = NormalizeAngle(_model.AngleZW);
+
+            //  calculating
+            double[,] rotationMatrix = CalculateRotationMatrix(
+                _model.AngleXY, _model.AngleXZ, _model.AngleXW,
+                _model.AngleYZ, _model.AngleYW, _model.AngleZW);
+
+            
+            ApplyRotationMatrix(rotationMatrix, _model.GetInitialVertices(), _model.RotatedVertices);
+        }
+
+
+        // Handle rotation without SHIFT
+        public void HandleMouseDragPrimary(double deltaX, double deltaY)
+        {
+            if (CurrentMode != RotationMode.ManualDrag)
+                return;
+
+            double s = TesseractSettings.ManualDragSensitivity;
+
+            // asimut
+            double deltaXY = deltaX * s;
+
+            // elewation
+            double deltaYZ = -deltaY * s;
+
+            ApplyManualRotationDelta(
+                deltaXY: deltaXY,
+                deltaYZ: deltaYZ
+            
+            );
+        }
+
+
+        // Handle rotation with SHIFT
+        public void HandleMouseDragAlternate(double deltaX, double deltaY)
+        {
+            if (CurrentMode != RotationMode.ManualDrag)
+                return;
+
+            double s = TesseractSettings.ManualDragAlternateSensitivity;
+
+            // Основные 4D-плоскости
+            double deltaXW = deltaX * s;       // горизонт → XW
+
+            // Вертикаль → сразу две плоскости с разным фазовым сдвигом
+            double deltaYW = -deltaY * s;      // YW (инверсия, как в 3D)
+            double deltaZW = deltaY * s; // ZW — с ослаблением и без инверсии
+
+            ApplyManualRotationDelta(
+                deltaXW: deltaXW,
+                deltaYW: deltaYW,
+                deltaZW: deltaZW
+            );
+        }
+
+
         private double NormalizeAngle(double angle)
         {
             return Math.IEEERemainder(angle, 2 * Math.PI);
         }
 
+
         // Порядок умножения: R_ZW * R_YW * R_YZ * R_XW * R_XZ * R_XY
-        private double[,] CalculateRotationMatrix(double angleXY, double angleXZ, double angleXW, double angleYZ, double angleYW, double angleZW)
+        private double[,] CalculateRotationMatrix( double angleXY, double angleXZ, double angleXW,
+                                                   double angleYZ, double angleYW, double angleZW)
         {
+            //  identity matrix
+            double[,] m = IdentityMatrix4D();
 
-            double[,] matrix = IdentityMatrix4D();
+            //  Turn right: m = m * R
+            //  Order: R_XY → R_XZ → R_XW → R_YZ → R_YW → R_ZW
 
+            ApplyRotationXY(ref m, angleXY);
+            ApplyRotationXZ(ref m, angleXZ);
+            ApplyRotationXW(ref m, angleXW);
+            ApplyRotationYZ(ref m, angleYZ);
+            ApplyRotationYW(ref m, angleYW);
+            ApplyRotationZW(ref m, angleZW);
 
-            // R_XY
-            matrix = MultiplyMatrices(matrix, RotationXYMatrix(angleXY));
-            // R_XZ
-            matrix = MultiplyMatrices(matrix, RotationXZMatrix(angleXZ));
-            // R_XW
-            matrix = MultiplyMatrices(matrix, RotationXWMatrix(angleXW));
-            // R_YZ
-            matrix = MultiplyMatrices(matrix, RotationYZMatrix(angleYZ));
-            // R_YW
-            matrix = MultiplyMatrices(matrix, RotationYWMatrix(angleYW));
-            // R_ZW
-            matrix = MultiplyMatrices(matrix, RotationZWMatrix(angleZW));
-
-            return matrix;
+            return m;
         }
 
+
+        private void ApplyRotationXY(ref double[,] m, double angle)
+        {
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            // m = m * R_XY
+            
+            for (int i = 0; i < 4; i++)
+            {
+                double col0 = m[i, 0];
+                double col1 = m[i, 1];
+                m[i, 0] = col0 * cosAngle + col1 * sinAngle;
+                m[i, 1] = col0 * (-sinAngle) + col1 * cosAngle;
+            }
+        }
+
+
+        private void ApplyRotationXZ(ref double[,] m, double angle)
+        {
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            for (int i = 0; i < 4; i++)
+            {
+                double col0 = m[i, 0];
+                double col2 = m[i, 2];
+                m[i, 0] = col0 * cosAngle + col2 * sinAngle;
+                m[i, 2] = col0 * (-sinAngle) + col2 * cosAngle;
+            }
+        }
+
+
+        private void ApplyRotationXW(ref double[,] m, double angle)
+        {
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            for (int i = 0; i < 4; i++)
+            {
+                double col0 = m[i, 0];
+                double col3 = m[i, 3];
+                m[i, 0] = col0 * cosAngle + col3 * sinAngle;
+                m[i, 3] = col0 * (-sinAngle) + col3 * cosAngle;
+            }
+        }
+
+
+        private void ApplyRotationYZ(ref double[,] m, double angle)
+        {
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            for (int i = 0; i < 4; i++)
+            {
+                double col1 = m[i, 1];
+                double col2 = m[i, 2];
+                m[i, 1] = col1 * cosAngle + col2 * sinAngle;
+                m[i, 2] = col1 * (-sinAngle) + col2 * cosAngle;
+            }
+        }
+
+
+        private void ApplyRotationYW(ref double[,] m, double angle)
+        {
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            for (int i = 0; i < 4; i++)
+            {
+                double col1 = m[i, 1];
+                double col3 = m[i, 3];
+                m[i, 1] = col1 * cosAngle + col3 * sinAngle;
+                m[i, 3] = col1 * (-sinAngle) + col3 * cosAngle;
+            }
+        }
+
+
+        private void ApplyRotationZW(ref double[,] m, double angle)
+        {
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            for (int i = 0; i < 4; i++)
+            {
+                double col2 = m[i, 2];
+                double col3 = m[i, 3];
+                m[i, 2] = col2 * cosAngle + col3 * sinAngle;
+                m[i, 3] = col2 * (-sinAngle) + col3 * cosAngle;
+            }
+        }
 
 
         private double[,] IdentityMatrix4D()
         {
             double[,] m = new double[4, 4];
-            m[0, 0] = 1; m[1, 1] = 1; m[2, 2] = 1; m[3, 3] = 1;
+            m[0, 0] = 1;
+            m[1, 1] = 1;
+            m[2, 2] = 1;
+            m[3, 3] = 1;
             return m;
         }
+
 
         private double[,] RotationXYMatrix(double angle)
         {
             double[,] m = IdentityMatrix4D();
-            double c = Math.Cos(angle);
-            double s = Math.Sin(angle);
-            m[0, 0] = c; m[0, 1] = -s;
-            m[1, 0] = s; m[1, 1] = c;
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            m[0, 0] = cosAngle;
+            m[0, 1] = -sinAngle;
+            m[1, 0] = sinAngle; 
+            m[1, 1] = cosAngle;
             return m;
         }
+
 
         private double[,] RotationXZMatrix(double angle)
         {
             double[,] m = IdentityMatrix4D();
-            double c = Math.Cos(angle);
-            double s = Math.Sin(angle);
-            m[0, 0] = c; m[0, 2] = -s;
-            m[2, 0] = s; m[2, 2] = c;
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            m[0, 0] = cosAngle; 
+            m[0, 2] = -sinAngle;
+            m[2, 0] = sinAngle; 
+            m[2, 2] = cosAngle;
             return m;
         }
+
 
         private double[,] RotationXWMatrix(double angle)
         {
             double[,] m = IdentityMatrix4D();
-            double c = Math.Cos(angle);
-            double s = Math.Sin(angle);
-            m[0, 0] = c; m[0, 3] = -s;
-            m[3, 0] = s; m[3, 3] = c;
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            m[0, 0] = cosAngle;
+            m[0, 3] = -sinAngle;
+            m[3, 0] = sinAngle;
+            m[3, 3] = cosAngle;
             return m;
         }
+
 
         private double[,] RotationYZMatrix(double angle)
         {
             double[,] m = IdentityMatrix4D();
-            double c = Math.Cos(angle);
-            double s = Math.Sin(angle);
-            m[1, 1] = c; m[1, 2] = -s;
-            m[2, 1] = s; m[2, 2] = c;
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            m[1, 1] = cosAngle;
+            m[1, 2] = -sinAngle;
+            m[2, 1] = sinAngle;
+            m[2, 2] = cosAngle;
             return m;
         }
+
 
         private double[,] RotationYWMatrix(double angle)
         {
             double[,] m = IdentityMatrix4D();
-            double c = Math.Cos(angle);
-            double s = Math.Sin(angle);
-            m[1, 1] = c; m[1, 3] = -s;
-            m[3, 1] = s; m[3, 3] = c;
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            m[1, 1] = cosAngle;
+            m[1, 3] = -sinAngle;
+            m[3, 1] = sinAngle;
+            m[3, 3] = cosAngle;
             return m;
         }
+
 
         private double[,] RotationZWMatrix(double angle)
         {
             double[,] m = IdentityMatrix4D();
-            double c = Math.Cos(angle);
-            double s = Math.Sin(angle);
-            m[2, 2] = c; m[2, 3] = -s;
-            m[3, 2] = s; m[3, 3] = c;
+            double cosAngle = Math.Cos(angle);
+            double sinAngle = Math.Sin(angle);
+            m[2, 2] = cosAngle;
+            m[2, 3] = -sinAngle;
+            m[3, 2] = sinAngle;
+            m[3, 3] = cosAngle;
             return m;
         }
 
@@ -199,6 +372,7 @@ namespace AxxonSoft_Prac
             return result;
         }
 
+
         //Применение общей матрицы вращения к массиву вершин
         private void ApplyRotationMatrix(double[,] rotationMatrix, double[,] initialVertices, double[,] rotatedVertices)
         {
@@ -218,6 +392,39 @@ namespace AxxonSoft_Prac
         }
 
 
+        public void ApplyManualRotationDelta(
+                           double deltaXY = 0,
+                           double deltaXZ = 0,
+                           double deltaXW = 0,
+                           double deltaYZ = 0,
+                           double deltaYW = 0,
+                           double deltaZW = 0)
+        {
+            if (CurrentMode != RotationMode.ManualDrag)
+                return; 
+
+            _model.AngleXY += deltaXY;
+            _model.AngleXZ += deltaXZ;
+            _model.AngleXW += deltaXW;
+            _model.AngleYZ += deltaYZ;
+            _model.AngleYW += deltaYW;
+            _model.AngleZW += deltaZW;
+
+            // normalisation
+            _model.AngleXY = NormalizeAngle(_model.AngleXY);
+            _model.AngleXZ = NormalizeAngle(_model.AngleXZ);
+            _model.AngleXW = NormalizeAngle(_model.AngleXW);
+            _model.AngleYZ = NormalizeAngle(_model.AngleYZ);
+            _model.AngleYW = NormalizeAngle(_model.AngleYW);
+            _model.AngleZW = NormalizeAngle(_model.AngleZW);
+
+            //recalculating the rotated vertices
+            double[,] rotationMatrix = CalculateRotationMatrix(
+                _model.AngleXY, _model.AngleXZ, _model.AngleXW,
+                _model.AngleYZ, _model.AngleYW, _model.AngleZW);
+
+            ApplyRotationMatrix(rotationMatrix, _model.GetInitialVertices(), _model.RotatedVertices);
+        }
 
 
         public void Reset()
