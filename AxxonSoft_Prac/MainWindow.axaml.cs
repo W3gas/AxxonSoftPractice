@@ -1,19 +1,20 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input;
 using Avalonia.Media;
+using AxxonSoft_Prac.AxxonSoft_Prac;
 using System;
 using System.Collections.Generic;
-using Avalonia.Input;
 
 namespace AxxonSoft_Prac
 {
     public partial class MainWindow : Window
     {
         // --- Логические компоненты ---
-        private TesseractModel _tesseractModel;
-        private TesseractRotationCalculator _rotationCalculator;
-        private TesseractRenderer _renderer;
+        private FigureModel4D _currentFigure;
+        private FigureRotationCalculator _rotationCalculator;
+        private FigureRenderer _renderer;
 
         // --- bool elements ---
         private bool _isInManualDragMode = false;
@@ -36,8 +37,9 @@ namespace AxxonSoft_Prac
         private Slider _projectionDistSlider;
         private Slider _projectionScaleSlider;
         private Slider _vertexSizeSlider;
-        private Button _changeEdgeColorButton;
-        private Button _changeVertexColorButton;
+        private ComboBox _edgeColorSelector;
+        private ComboBox _vertexColorSelector;
+        private ComboBox _figureSelector;
 
         // Текстовые блоки для значений
         private TextBlock _speedValue;
@@ -62,6 +64,7 @@ namespace AxxonSoft_Prac
             bool uiLoadedSuccessfully = FindUIElements();
             if (uiLoadedSuccessfully)
             {
+                LoadColorSelectors();
                 InitializeLogic();
                 SetupEventHandlers();
                 SetSliderValuesFromSettings();
@@ -106,8 +109,9 @@ namespace AxxonSoft_Prac
             _projectionDistSlider = Require<Slider>("ProjectionDistSlider");
             _projectionScaleSlider = Require<Slider>("ProjectionScaleSlider");
             _vertexSizeSlider = Require<Slider>("VertexSizeSlider");
-            _changeEdgeColorButton = Require<Button>("ChangeEdgeColorButton");
-            _changeVertexColorButton = Require<Button>("ChangeVertexColorButton");
+            _edgeColorSelector = Require<ComboBox>("EdgeColorSelector");
+            _vertexColorSelector = Require<ComboBox>("VertexColorSelector");
+            _figureSelector = Require<ComboBox>("FigureSelector");
 
             _speedValue = Require<TextBlock>("SpeedValue");
             _sizeValue = Require<TextBlock>("SizeValue");
@@ -127,10 +131,38 @@ namespace AxxonSoft_Prac
 
         private void InitializeLogic()
         {
-            _tesseractModel = new TesseractModel();
-            _rotationCalculator = new TesseractRotationCalculator(_tesseractModel);
-            _renderer = new TesseractRenderer(_drawCanvas, _tesseractModel);
+            InitializeFigure("Tesseract"); // фигура по умолчанию
         }
+
+
+        private void InitializeFigure(string figureName)
+        {
+            // Очистить Canvas
+            _drawCanvas.Children.Clear();
+
+            // Создать модель
+            _currentFigure = figureName switch
+            {
+                "Pyramid" => new PyramidModel(),
+                _ => new TesseractModel()
+            };
+
+            // Создать калькулятор и рендерер
+            _rotationCalculator = new FigureRotationCalculator(_currentFigure);
+            _renderer = new FigureRenderer(_drawCanvas, _currentFigure);
+
+            // Применить текущие настройки
+            _renderer.UpdateColors();
+            _renderer.Update();
+
+            // Восстановить текущий режим вращения
+            if (_radioX.IsChecked == true) _rotationCalculator.CurrentMode = RotationMode.ManualX;
+            else if (_radioY.IsChecked == true) _rotationCalculator.CurrentMode = RotationMode.ManualY;
+            else if (_radioZ.IsChecked == true) _rotationCalculator.CurrentMode = RotationMode.ManualZ;
+            else if (_radioAuto.IsChecked == true) _rotationCalculator.CurrentMode = RotationMode.Auto;
+            else if (_radioManual.IsChecked == true) _rotationCalculator.CurrentMode = RotationMode.ManualDrag;
+        }
+
 
         private void SetupEventHandlers()
         {
@@ -147,8 +179,9 @@ namespace AxxonSoft_Prac
             _radioAuto.Click += RadioAuto_Click;
             _radioManual.Click += RadioManual_Click;
 
-            _changeEdgeColorButton.Click += ChangeEdgeColorButton_Click;
-            _changeVertexColorButton.Click += ChangeVertexColorButton_Click;
+            _edgeColorSelector.SelectionChanged += EdgeColorSelector_SelectionChanged;
+            _vertexColorSelector.SelectionChanged += VertexColorSelector_SelectionChanged;
+            _figureSelector.SelectionChanged += FigureSelector_SelectionChanged;
 
             // Обработчики для слайдеров
             _speedSlider.ValueChanged += SpeedSlider_ValueChanged;
@@ -166,18 +199,18 @@ namespace AxxonSoft_Prac
 
         private void SetSliderValuesFromSettings()
         {
-            _speedSlider.Value = TesseractSettings.BaseRotationSpeed;
-            _sizeSlider.Value = TesseractSettings.TesseractBaseSize;
-            _projectionDistSlider.Value = TesseractSettings.ProjectionDistance;
-            _projectionScaleSlider.Value = TesseractSettings.ProjectionScale;
-            _vertexSizeSlider.Value = TesseractSettings.VertexSize;
+            _speedSlider.Value = FigureSettings.BaseRotationSpeed;
+            _sizeSlider.Value = FigureSettings.TesseractBaseSize;
+            _projectionDistSlider.Value = FigureSettings.ProjectionDistance;
+            _projectionScaleSlider.Value = FigureSettings.ProjectionScale;
+            _vertexSizeSlider.Value = FigureSettings.VertexSize;
 
             
-            _speedValue.Text = TesseractSettings.BaseRotationSpeed.ToString("F3");
-            _sizeValue.Text = TesseractSettings.TesseractBaseSize.ToString("F0");
-            _projectionDistValue.Text = TesseractSettings.ProjectionDistance.ToString("F0");
-            _projectionScaleValue.Text = TesseractSettings.ProjectionScale.ToString("F0");
-            _vertexSizeValue.Text = TesseractSettings.VertexSize.ToString("F0");
+            _speedValue.Text = FigureSettings.BaseRotationSpeed.ToString("F3");
+            _sizeValue.Text = FigureSettings.TesseractBaseSize.ToString("F0");
+            _projectionDistValue.Text = FigureSettings.ProjectionDistance.ToString("F0");
+            _projectionScaleValue.Text = FigureSettings.ProjectionScale.ToString("F0");
+            _vertexSizeValue.Text = FigureSettings.VertexSize.ToString("F0");
         }
 
 
@@ -307,35 +340,70 @@ namespace AxxonSoft_Prac
         }
 
 
-        private void ChangeEdgeColorButton_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void LoadColorSelectors()
         {
-           
-            _currentEdgeColorIndex = (_currentEdgeColorIndex + 1) % TesseractSettings.EdgeColorPalette.Length;
-            TesseractSettings.EdgeColor = TesseractSettings.EdgeColorPalette[_currentEdgeColorIndex];
-            
-           _renderer.UpdateColors();
+            _edgeColorSelector.Items.Clear();
+            _vertexColorSelector.Items.Clear();
+
+            foreach (var color in FigureSettings.EdgeColorPalette)
+            {
+                var border = new Border
+                {
+                    Width = 20,
+                    Height = 16,
+                    Background = new SolidColorBrush(color),
+                    Margin = new Avalonia.Thickness(2),
+                    CornerRadius = new Avalonia.CornerRadius(2)
+                };
+                _edgeColorSelector.Items.Add(new ComboBoxItem { Content = border });
+            }
+
+            foreach (var color in FigureSettings.VertexColorPalette)
+            {
+                var border = new Border
+                {
+                    Width = 20,
+                    Height = 16,
+                    Background = new SolidColorBrush(color),
+                    Margin = new Avalonia.Thickness(2),
+                    CornerRadius = new Avalonia.CornerRadius(2)
+                };
+                _vertexColorSelector.Items.Add(new ComboBoxItem { Content = border });
+            }
+
+            _edgeColorSelector.SelectedIndex = 0;
+            _vertexColorSelector.SelectedIndex = 0;
         }
 
 
-        private void ChangeVertexColorButton_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void EdgeColorSelector_SelectionChanged(object sender, Avalonia.Controls.SelectionChangedEventArgs e)
         {
-           
-            _currentVertexColorIndex = (_currentVertexColorIndex + 1) % TesseractSettings.VertexColorPalette.Length;
-            TesseractSettings.VertexColor = TesseractSettings.VertexColorPalette[_currentVertexColorIndex];
+            if (_edgeColorSelector.SelectedIndex >= 0)
+            {
+                FigureSettings.EdgeColor = FigureSettings.EdgeColorPalette[_edgeColorSelector.SelectedIndex];
+                _renderer?.UpdateColors();
+            }
+        }
 
-            _renderer.UpdateColors();
+        private void VertexColorSelector_SelectionChanged(object sender, Avalonia.Controls.SelectionChangedEventArgs e)
+        {
+            if (_vertexColorSelector.SelectedIndex >= 0)
+            {
+                FigureSettings.VertexColor = FigureSettings.VertexColorPalette[_vertexColorSelector.SelectedIndex];
+                _renderer?.UpdateColors();
+            }
         }
 
 
         private void SpeedSlider_ValueChanged(object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
         {
             double newValue = e.NewValue;
-            if (newValue < TesseractSettings.MinRotationSpeed)
-                newValue = TesseractSettings.MinRotationSpeed;
-            else if (newValue > TesseractSettings.MaxRotationSpeed)
-                newValue = TesseractSettings.MaxRotationSpeed;
+            if (newValue < FigureSettings.MinRotationSpeed)
+                newValue = FigureSettings.MinRotationSpeed;
+            else if (newValue > FigureSettings.MaxRotationSpeed)
+                newValue = FigureSettings.MaxRotationSpeed;
 
-            TesseractSettings.BaseRotationSpeed = newValue;
+            FigureSettings.BaseRotationSpeed = newValue;
             if (_speedValue != null)
                 _speedValue.Text = newValue.ToString("F3");
         }
@@ -345,16 +413,16 @@ namespace AxxonSoft_Prac
         {
             double newValue = e.NewValue;
 
-            if (newValue < TesseractSettings.MinTesseractSize)
-                newValue = TesseractSettings.MinTesseractSize;
-            else if (newValue > TesseractSettings.MaxTesseractSize)
-                newValue = TesseractSettings.MaxTesseractSize;
+            if (newValue < FigureSettings.MinTesseractSize)
+                newValue = FigureSettings.MinTesseractSize;
+            else if (newValue > FigureSettings.MaxTesseractSize)
+                newValue = FigureSettings.MaxTesseractSize;
 
-            TesseractSettings.TesseractBaseSize = newValue;
+            FigureSettings.TesseractBaseSize = newValue;
             if (_sizeValue != null)
                 _sizeValue.Text = newValue.ToString("F0");
 
-            _tesseractModel.RegenerateVerticesFromCurrentSize();
+            _currentFigure.RegenerateVerticesFromCurrentSize();
             _rotationCalculator.ApplyCurrentRotation();
             _renderer.Update();
         }
@@ -363,12 +431,12 @@ namespace AxxonSoft_Prac
         private void ProjectionDistSlider_ValueChanged(object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
         {
             double newValue = e.NewValue;
-            if (newValue < TesseractSettings.MinProjectionDistance)
-                newValue = TesseractSettings.MinProjectionDistance;
-            else if (newValue > TesseractSettings.MaxProjectionDistance)
-                newValue = TesseractSettings.MaxProjectionDistance;
+            if (newValue < FigureSettings.MinProjectionDistance)
+                newValue = FigureSettings.MinProjectionDistance;
+            else if (newValue > FigureSettings.MaxProjectionDistance)
+                newValue = FigureSettings.MaxProjectionDistance;
 
-            TesseractSettings.ProjectionDistance = newValue;
+            FigureSettings.ProjectionDistance = newValue;
             if (_projectionDistValue != null)
                 _projectionDistValue.Text = newValue.ToString("F0");
 
@@ -379,12 +447,12 @@ namespace AxxonSoft_Prac
         private void ProjectionScaleSlider_ValueChanged(object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
         {
             double newValue = e.NewValue;
-            if (newValue < TesseractSettings.MinProjectionScale)
-                newValue = TesseractSettings.MinProjectionScale;
-            else if (newValue > TesseractSettings.MaxProjectionScale)
-                newValue = TesseractSettings.MaxProjectionScale;
+            if (newValue < FigureSettings.MinProjectionScale)
+                newValue = FigureSettings.MinProjectionScale;
+            else if (newValue > FigureSettings.MaxProjectionScale)
+                newValue = FigureSettings.MaxProjectionScale;
 
-            TesseractSettings.ProjectionScale = newValue;
+            FigureSettings.ProjectionScale = newValue;
             if (_projectionScaleValue != null)
                 _projectionScaleValue.Text = newValue.ToString("F0");
 
@@ -395,12 +463,12 @@ namespace AxxonSoft_Prac
         private void VertexSizeSlider_ValueChanged(object sender, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e)
         {
             double newValue = e.NewValue;
-            if (newValue < TesseractSettings.MinVertexSize)
-                newValue = TesseractSettings.MinVertexSize;
-            else if (newValue > TesseractSettings.MaxVertexSize)
-                newValue = TesseractSettings.MaxVertexSize;
+            if (newValue < FigureSettings.MinVertexSize)
+                newValue = FigureSettings.MinVertexSize;
+            else if (newValue > FigureSettings.MaxVertexSize)
+                newValue = FigureSettings.MaxVertexSize;
 
-            TesseractSettings.VertexSize = newValue;
+            FigureSettings.VertexSize = newValue;
             if (_vertexSizeValue != null)
                 _vertexSizeValue.Text = newValue.ToString("F0");
 
@@ -464,6 +532,15 @@ namespace AxxonSoft_Prac
             {
                 _isDragging = false;
                 e.Pointer.Capture(null); 
+            }
+        }
+
+
+        private void FigureSelector_SelectionChanged(object sender, Avalonia.Controls.SelectionChangedEventArgs e)
+        {
+            if (_figureSelector.SelectedItem is ComboBoxItem item)
+            {
+                InitializeFigure(item.Content.ToString());
             }
         }
 

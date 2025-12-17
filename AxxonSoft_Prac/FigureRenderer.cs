@@ -1,20 +1,21 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
+using AxxonSoft_Prac.AxxonSoft_Prac;
 using System;
 
 namespace AxxonSoft_Prac
 {
-    public class TesseractRenderer
+    public class FigureRenderer
     {
        
         private readonly Canvas _canvas;
-        private readonly TesseractModel _model;
+        private readonly IFigureModel _model;
         private Line[] _edgeLines;
         private Ellipse[] _vertexEllipses;
 
         // Принимаем Canvas
-        public TesseractRenderer(Canvas canvas, TesseractModel model)
+        public FigureRenderer(Canvas canvas, IFigureModel model)
         {
             _canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
             _model = model ?? throw new ArgumentNullException(nameof(model));
@@ -30,22 +31,22 @@ namespace AxxonSoft_Prac
             {
                 _edgeLines[i] = new Line
                 {
-                    Stroke = new SolidColorBrush(TesseractSettings.EdgeColor),
-                    StrokeThickness = TesseractSettings.StrokeThickness,
+                    Stroke = new SolidColorBrush(FigureSettings.EdgeColor),
+                    StrokeThickness = FigureSettings.StrokeThickness,
                     IsHitTestVisible = false
                 };
                 _canvas.Children.Add(_edgeLines[i]);
             }
 
-            var numberOfVertices = TesseractModel.NumberOfVertices;
+            var numberOfVertices = _model.VertexCount;
             _vertexEllipses = new Ellipse[numberOfVertices];
             for (int i = 0; i < numberOfVertices; i++)
             {
                 _vertexEllipses[i] = new Ellipse
                 {
-                    Width = TesseractSettings.VertexSize,
-                    Height = TesseractSettings.VertexSize,
-                    Fill = new SolidColorBrush(TesseractSettings.VertexColor),
+                    Width = FigureSettings.VertexSize,
+                    Height = FigureSettings.VertexSize,
+                    Fill = new SolidColorBrush(FigureSettings.VertexColor),
                     IsHitTestVisible = false
                 };
                 _canvas.Children.Add(_vertexEllipses[i]);
@@ -66,16 +67,16 @@ namespace AxxonSoft_Prac
                 double centerY = _canvas.Bounds.Height / 2;
 
                 double[,] rotatedVertices = _model.RotatedVertices;
-                double[,] projectedVertices = new double[TesseractModel.NumberOfVertices, 2];
+                double[,] projectedVertices = new double[_model.VertexCount, 2];
 
-                for (int i = 0; i < TesseractModel.NumberOfVertices; i++)
+                for (int i = 0; i < _model.VertexCount; i++)
                 {
                     double x = rotatedVertices[i, 0];
                     double y = rotatedVertices[i, 1];
                     double z = rotatedVertices[i, 2];
                     double w = rotatedVertices[i, 3];
 
-                    double distance = TesseractSettings.ProjectionDistance;
+                    double distance = FigureSettings.ProjectionDistance;
                     // Avoid division by zero in 4D projection
                     if (Math.Abs(distance + w) < 1e-9)
                     {
@@ -89,7 +90,7 @@ namespace AxxonSoft_Prac
                         double y3d = y * factor1;
                         double z3d = z * factor1;
 
-                        double scale = TesseractSettings.ProjectionScale;
+                        double scale = FigureSettings.ProjectionScale;
                         // Avoid division by zero in 3D→2D projection
                         if (Math.Abs(scale + z3d) < 1e-9)
                         {
@@ -115,10 +116,10 @@ namespace AxxonSoft_Prac
                     _edgeLines[i].EndPoint = new Avalonia.Point(projectedVertices[to, 0], projectedVertices[to, 1]);
                 }
 
-                for (int i = 0; i < TesseractModel.NumberOfVertices; i++)
+                for (int i = 0; i < _model.VertexCount; i++)
                 {
-                    Canvas.SetLeft(_vertexEllipses[i], projectedVertices[i, 0] - TesseractSettings.VertexSize / 2);
-                    Canvas.SetTop(_vertexEllipses[i], projectedVertices[i, 1] - TesseractSettings.VertexSize / 2);
+                    Canvas.SetLeft(_vertexEllipses[i], projectedVertices[i, 0] - FigureSettings.VertexSize / 2);
+                    Canvas.SetTop(_vertexEllipses[i], projectedVertices[i, 1] - FigureSettings.VertexSize / 2);
                 }
             }
             catch (System.Exception ex)
@@ -130,13 +131,13 @@ namespace AxxonSoft_Prac
 
         public void UpdateColors()
         {
-            var edgeBrush = new SolidColorBrush(TesseractSettings.EdgeColor);
+            var edgeBrush = new SolidColorBrush(FigureSettings.EdgeColor);
             foreach (var line in _edgeLines)
             {
                 line.Stroke = edgeBrush;
             }
 
-            var vertexBrush = new SolidColorBrush(TesseractSettings.VertexColor);
+            var vertexBrush = new SolidColorBrush(FigureSettings.VertexColor);
             foreach (var point in _vertexEllipses)
             {
                 point.Fill = vertexBrush;

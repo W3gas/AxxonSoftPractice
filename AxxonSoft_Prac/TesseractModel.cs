@@ -2,36 +2,18 @@
 
 namespace AxxonSoft_Prac
 {
-   
-    public class TesseractModel
+    public class TesseractModel : FigureModel4D
     {
-       
         public const int NumberOfVertices = 16;
-
-        
         public const int NumberOfEdges = 32;
 
-        // Массив для хранения исходных (невращённых) 4D-координат вершин
         private readonly double[,] _initialVertices;
-
-
-        // Массив для хранения текущих вращённых 4D-координат вершин
-        public double[,] RotatedVertices { get; }
-
-
-        // Массив, определяющий рёбра (связи между вершинами). Каждый элемент - пара индексов
         private (int, int)[] _edges;
 
+        public override double[,] RotatedVertices { get; }
 
-        // Текущие углы вращения.
-        public double AngleXY { get; set; } = 0;
-        public double AngleXZ { get; set; } = 0;
-        public double AngleXW { get; set; } = 0;
-        public double AngleYZ { get; set; } = 0;
-        public double AngleYW { get; set; } = 0;
-        public double AngleZW { get; set; } = 0;
+        public override int VertexCount => NumberOfVertices;
 
-        
         public TesseractModel()
         {
             _initialVertices = new double[NumberOfVertices, 4];
@@ -39,12 +21,9 @@ namespace AxxonSoft_Prac
             _edges = new (int, int)[NumberOfEdges];
             InitializeVertices();
             InitializeEdges();
-          
             CopyInitialToRotated();
         }
 
-
-        // Инициализация 16 вершин тессеракта в 4D пространстве
         private void InitializeVertices()
         {
             int index = 0;
@@ -53,19 +32,16 @@ namespace AxxonSoft_Prac
                     for (int k = 0; k < 2; k++)
                         for (int l = 0; l < 2; l++)
                         {
-                            _initialVertices[index, 0] = (i * 2 - 1) * TesseractSettings.TesseractBaseSize; // X
-                            _initialVertices[index, 1] = (j * 2 - 1) * TesseractSettings.TesseractBaseSize; // Y
-                            _initialVertices[index, 2] = (k * 2 - 1) * TesseractSettings.TesseractBaseSize; // Z
-                            _initialVertices[index, 3] = (l * 2 - 1) * TesseractSettings.TesseractBaseSize; // W
+                            _initialVertices[index, 0] = (i * 2 - 1) * FigureSettings.TesseractBaseSize;
+                            _initialVertices[index, 1] = (j * 2 - 1) * FigureSettings.TesseractBaseSize;
+                            _initialVertices[index, 2] = (k * 2 - 1) * FigureSettings.TesseractBaseSize;
+                            _initialVertices[index, 3] = (l * 2 - 1) * FigureSettings.TesseractBaseSize;
                             index++;
                         }
         }
 
-
-        // Инициализация рёбер тессеракта
         private void InitializeEdges()
         {
-           
             _edges = new (int, int)[]
             {
                 (0,1), (0,2), (0,4), (0,8), (1,3), (1,5), (1,9), (2,3), (2,6), (2,10),
@@ -75,9 +51,7 @@ namespace AxxonSoft_Prac
             };
         }
 
-
-        // Вспомогательный метод для копирования исходных вершин в массив вращённых.
-        private void CopyInitialToRotated()
+        protected override void CopyInitialToRotated()
         {
             for (int i = 0; i < NumberOfVertices; i++)
             {
@@ -88,39 +62,37 @@ namespace AxxonSoft_Prac
             }
         }
 
-        
-        public double[,] GetInitialVertices()
+        public override double[,] GetInitialVertices()
         {
             var copy = new double[NumberOfVertices, 4];
             Array.Copy(_initialVertices, copy, NumberOfVertices * 4);
             return copy;
         }
 
-
-        public (int, int)[] GetEdges()
+        public override (int, int)[] GetEdges()
         {
             var copy = new (int, int)[_edges.Length];
             Array.Copy(_edges, copy, _edges.Length);
             return copy;
         }
 
+        
 
-        public void RegenerateVerticesFromCurrentSize()
+        public override void RegenerateFromSize()
         {
-            InitializeVertices();
-            CopyInitialToRotated();
+            RegenerateVerticesFromCurrentSize();
+        }
+
+        public override void Reset()
+        {
+            base.Reset(); 
         }
 
 
-        public void Reset()
+        public override void RegenerateVerticesFromCurrentSize()
         {
-            AngleXY = 0;
-            AngleXZ = 0;
-            AngleXW = 0;
-            AngleYZ = 0;
-            AngleYW = 0;
-            AngleZW = 0;
-            CopyInitialToRotated(); 
+            InitializeVertices();
+            CopyInitialToRotated();
         }
     }
 }

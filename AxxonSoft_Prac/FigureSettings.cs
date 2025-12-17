@@ -4,7 +4,7 @@ using System;
 namespace AxxonSoft_Prac
 {
     
-    public static class TesseractSettings
+    public static class FigureSettings
     {
         
 
@@ -41,8 +41,8 @@ namespace AxxonSoft_Prac
         public static double TesseractBaseSize { get; set; } = 100.0;
 
         // Палитры цветов для кнопок
-        public static Color[] EdgeColorPalette { get; } = { Colors.Cyan, Colors.Red, Colors.Green, Colors.Blue, Colors.Magenta, Colors.Yellow };
-        public static Color[] VertexColorPalette { get; } = { Colors.White, Colors.Orange, Colors.Lime, Colors.Aqua, Colors.Pink, Colors.Gold };
+        public static Color[] EdgeColorPalette { get; } = { Colors.Cyan, Colors.Red, Colors.Green, Colors.Blue, Colors.Magenta, Colors.Gold };
+        public static Color[] VertexColorPalette { get; } = { Colors.White, Colors.Orange, Colors.Lime, Colors.Aqua, Colors.Pink, Colors.Gold, Colors.Red };
 
         // Минимальные/максимальные значения для слайдеров
         public const double MinRotationSpeed = 0.001;

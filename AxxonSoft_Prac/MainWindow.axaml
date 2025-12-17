@@ -19,13 +19,21 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
-            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,5">
-                <RadioButton x:Name="RadioX" Content="Rotation X" GroupName="Axis" Margin="5"/>
-                <RadioButton x:Name="RadioY" Content="Rotation Y" GroupName="Axis" Margin="5"/>
-                <RadioButton x:Name="RadioZ" Content="Rotation Z" GroupName="Axis" Margin="5"/>
-                <RadioButton x:Name="RadioAuto" Content="Auto" GroupName="Axis" Margin="5" IsChecked="True"/>
-                <RadioButton x:Name="RadioManual" Content="Manual" GroupName="Axis" Margin="5"/>
-            </StackPanel>
+           <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,5">
+            <!-- Выбор фигуры -->
+            <TextBlock Text="Figure:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <ComboBox x:Name="FigureSelector" Width="120" Margin="0,0,15,0" SelectedIndex="0">
+                <ComboBoxItem Content="Tesseract"/>
+                <ComboBoxItem Content="Pyramid"/>
+            </ComboBox>
+
+            <!-- Режимы вращения -->
+            <RadioButton x:Name="RadioX" Content="Rotation X" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
+            <RadioButton x:Name="RadioY" Content="Rotation Y" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
+            <RadioButton x:Name="RadioZ" Content="Rotation Z" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
+            <RadioButton x:Name="RadioAuto" Content="Auto" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center" IsChecked="True"/>
+            <RadioButton x:Name="RadioManual" Content="Manual" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
+        </StackPanel>
             
             <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,5,0,5">
                 <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
@@ -73,12 +81,12 @@
                     
                     <StackPanel Orientation="Vertical" Margin="0,0,10,0">
                         <TextBlock Text="Edge Color:" VerticalAlignment="Center" Margin="0,0,0,2"/>
-                        <Button x:Name="ChangeEdgeColorButton" Content="Change" Width="120" Margin="0"/>
+                        <ComboBox x:Name="EdgeColorSelector" Width="120" Margin="0"/>
                     </StackPanel>
-                    
+
                     <StackPanel Orientation="Vertical" Margin="0,0,0,0">
                         <TextBlock Text="Vertex Color:" VerticalAlignment="Center" Margin="0,0,0,2"/>
-                        <Button x:Name="ChangeVertexColorButton" Content="Change" Width="120" Margin="0"/>
+                        <ComboBox x:Name="VertexColorSelector" Width="120" Margin="0"/>
                     </StackPanel>
                 </StackPanel>
                 
