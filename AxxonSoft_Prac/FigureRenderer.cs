@@ -1,7 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
-using AxxonSoft_Prac.AxxonSoft_Prac;
 using System;
 
 namespace AxxonSoft_Prac

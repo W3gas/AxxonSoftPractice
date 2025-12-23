@@ -1,9 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Input;
 using Avalonia.Media;
-using AxxonSoft_Prac.AxxonSoft_Prac;
 using System;
 using System.Collections.Generic;
 
@@ -11,18 +9,19 @@ namespace AxxonSoft_Prac
 {
     public partial class MainWindow : Window
     {
-        // --- Логические компоненты ---
+        // --- Logick elements ---
         private FigureModel4D _currentFigure;
         private FigureRotationCalculator _rotationCalculator;
         private FigureRenderer _renderer;
 
-        // --- bool elements ---
+        // --- Bool elements ---
         private bool _isInManualDragMode = false;
         private bool _isDragging = false;
         private Point _lastMousePosition;
         private bool _isShiftPressed = false;
+        private bool _isAnimating = false;
 
-        // --- UI компоненты ---
+        // --- UI elements ---
         private Canvas _drawCanvas;
         private RadioButton _radioX;
         private RadioButton _radioY;
@@ -41,21 +40,13 @@ namespace AxxonSoft_Prac
         private ComboBox _vertexColorSelector;
         private ComboBox _figureSelector;
 
-        // Текстовые блоки для значений
+        // Text blocks
         private TextBlock _speedValue;
         private TextBlock _sizeValue;
         private TextBlock _projectionDistValue;
         private TextBlock _projectionScaleValue;
         private TextBlock _vertexSizeValue;
         
-       
-
-       
-        private bool _isAnimating = false;
-
-        
-        private int _currentEdgeColorIndex = 0;
-        private int _currentVertexColorIndex = 0;
 
         public MainWindow()
         {
@@ -76,7 +67,7 @@ namespace AxxonSoft_Prac
             }
 
 
-            //  Handels of keys
+            //  Handlers of keys
             this.KeyDown += MainWindow_KeyDown;
             this.KeyUp += MainWindow_KeyUp;
         }
@@ -131,31 +122,31 @@ namespace AxxonSoft_Prac
 
         private void InitializeLogic()
         {
-            InitializeFigure("Tesseract"); // фигура по умолчанию
+            InitializeFigure("Tesseract"); // default figure
         }
 
 
         private void InitializeFigure(string figureName)
         {
-            // Очистить Canvas
+            // Clear Canvas
             _drawCanvas.Children.Clear();
 
-            // Создать модель
+            // Create model
             _currentFigure = figureName switch
             {
                 "Pyramid" => new PyramidModel(),
                 _ => new TesseractModel()
             };
 
-            // Создать калькулятор и рендерер
+            // Create calculator and renderer
             _rotationCalculator = new FigureRotationCalculator(_currentFigure);
             _renderer = new FigureRenderer(_drawCanvas, _currentFigure);
 
-            // Применить текущие настройки
+            // apply settings
             _renderer.UpdateColors();
             _renderer.Update();
 
-            // Восстановить текущий режим вращения
+            // apply rotation mode
             if (_radioX.IsChecked == true) _rotationCalculator.CurrentMode = RotationMode.ManualX;
             else if (_radioY.IsChecked == true) _rotationCalculator.CurrentMode = RotationMode.ManualY;
             else if (_radioZ.IsChecked == true) _rotationCalculator.CurrentMode = RotationMode.ManualZ;
@@ -166,7 +157,7 @@ namespace AxxonSoft_Prac
 
         private void SetupEventHandlers()
         {
-            //  Handlers of Window_bounds
+            //  Handlers of window_bounds
             _drawCanvas.PropertyChanged += DrawCanvas_PropertyChanged;
 
             _btnStart.Click += BtnStart_Click;
@@ -183,7 +174,7 @@ namespace AxxonSoft_Prac
             _vertexColorSelector.SelectionChanged += VertexColorSelector_SelectionChanged;
             _figureSelector.SelectionChanged += FigureSelector_SelectionChanged;
 
-            // Обработчики для слайдеров
+            // Handlers of sliders
             _speedSlider.ValueChanged += SpeedSlider_ValueChanged;
             _sizeSlider.ValueChanged += SizeSlider_ValueChanged;
             _projectionDistSlider.ValueChanged += ProjectionDistSlider_ValueChanged;
@@ -221,7 +212,7 @@ namespace AxxonSoft_Prac
             _speedSlider.IsEnabled = !_isInManualDragMode;
             _btnReset.IsEnabled = true;
 
-            // Установка курсора без тернарного оператора
+            // cursor placement
             if (_isInManualDragMode)
             {
                 _drawCanvas.Cursor = new Cursor(StandardCursorType.SizeAll);

@@ -1,5 +1,4 @@
-﻿using AxxonSoft_Prac.AxxonSoft_Prac;
-
+﻿
 namespace AxxonSoft_Prac
 {
     /// <summary>
