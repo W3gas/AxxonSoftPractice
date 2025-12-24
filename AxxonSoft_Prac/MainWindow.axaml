@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="AxxonSoft_Prac.MainWindow"
-        Title="Tesseract 4D"
+        Title="4D Figures"
         Width="1000" Height="800"
         MinWidth="700" MinHeight="600"
         CanResize="True">
@@ -19,21 +19,18 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
-           <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,5">
-            <!-- Выбор фигуры -->
-            <TextBlock Text="Figure:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <ComboBox x:Name="FigureSelector" Width="120" Margin="0,0,15,0" SelectedIndex="0">
-                <ComboBoxItem Content="Tesseract"/>
-                <ComboBoxItem Content="Pyramid"/>
-            </ComboBox>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,5">
+                <!-- Figure collector -->
+                <TextBlock Text="Figure:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <ComboBox x:Name="FigureSelector" Width="120" Margin="0,0,15,0"/>
 
-            <!-- Режимы вращения -->
-            <RadioButton x:Name="RadioX" Content="Rotation X" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
-            <RadioButton x:Name="RadioY" Content="Rotation Y" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
-            <RadioButton x:Name="RadioZ" Content="Rotation Z" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
-            <RadioButton x:Name="RadioAuto" Content="Auto" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center" IsChecked="True"/>
-            <RadioButton x:Name="RadioManual" Content="Manual" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
-        </StackPanel>
+                <!-- Rotation mods -->
+                <RadioButton x:Name="RadioX" Content="Rotation X" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
+                <RadioButton x:Name="RadioY" Content="Rotation Y" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
+                <RadioButton x:Name="RadioZ" Content="Rotation Z" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
+                <RadioButton x:Name="RadioAuto" Content="Auto" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center" IsChecked="True"/>
+                <RadioButton x:Name="RadioManual" Content="Manual" GroupName="Axis" Margin="10,0,5,0" VerticalAlignment="Center"/>
+            </StackPanel>
             
             <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,5,0,5">
                 <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
@@ -91,8 +88,7 @@
                 </StackPanel>
                 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-                    <Button x:Name="BtnStart" Content="Start" Width="80" Margin="5"/>
-                    <Button x:Name="BtnStop" Content="Stop" Width="80" Margin="5"/>
+                    <Button x:Name="BtnTogglePlayPause" Content="Pause" Width="80" Margin="5"/>
                     <Button x:Name="BtnReset" Content="Reset" Width="80" Margin="5"/>
                 </StackPanel>
             </StackPanel>

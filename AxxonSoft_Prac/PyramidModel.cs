@@ -83,9 +83,7 @@ namespace AxxonSoft_Prac
 
         public override double[,] GetInitialVertices()
         {
-            var copy = new double[NumberOfVertices, 4];
-            Array.Copy(_initialVertices, copy, NumberOfVertices * 4);
-            return copy;
+            return _initialVertices;
         }
 
         public override (int, int)[] GetEdges()

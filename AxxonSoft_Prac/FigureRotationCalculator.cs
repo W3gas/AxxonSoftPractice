@@ -2,7 +2,7 @@
 
 namespace AxxonSoft_Prac
 {
-   
+
 
     // Перечисление для определения режима вращения.
     public enum RotationMode
@@ -16,19 +16,14 @@ namespace AxxonSoft_Prac
 
     public class FigureRotationCalculator
     {
-       // public static string temp = "";
 
 
-
-
-
-        
         private readonly FigureModel4D _model;
 
         // Текущий режим вращения.
         public RotationMode CurrentMode { get; set; } = RotationMode.ManualX;
 
-        // получение модели для вращения 
+        // получение модели для вращения
         public FigureRotationCalculator(FigureModel4D model)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
@@ -42,33 +37,64 @@ namespace AxxonSoft_Prac
             switch (CurrentMode)
             {
                 case RotationMode.ManualX:
-                    _model.AngleXY += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
-                    _model.AngleXZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
-                    if (!is3D) _model.AngleXW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                    if (is3D)
+                    {
+                        // Вращение вокруг оси X = поворот в плоскости YZ
+                        _model.AngleYZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                    }
+                    else
+                    {
+                        // В 4D: вращение в плоскости XW — даёт "выдвижение" по оси X, как в гифках
+                        _model.AngleXW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                        //_model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                        _model.AngleYZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;  //3d integration
+                    }
                     break;
+
                 case RotationMode.ManualY:
-                    _model.AngleXY += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
-                    _model.AngleYZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
-                    if (!is3D) _model.AngleYW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                    if (is3D)
+                    {
+                        // Вращение вокруг оси Y = поворот в плоскости XZ
+                        _model.AngleXZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                    }
+                    else
+                    {
+                        // В 4D: вращение в плоскости YW — связано с осью Y
+                        //_model.AngleYW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                        _model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                        _model.AngleXZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;  //3d integration
+                    }
                     break;
+
                 case RotationMode.ManualZ:
-                    _model.AngleXZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
-                    _model.AngleYZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
-                    if (!is3D) _model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                    if (is3D)
+                    {
+                        // Вращение вокруг оси Z = поворот в плоскости XY
+                        _model.AngleXY += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                    }
+                    else
+                    {
+                        // В 4D: вращение в плоскости ZW — связано с осью Z
+                        _model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                        //_model.AngleXY += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;  //3d integration
+                    }
                     break;
                 case RotationMode.Auto:
+                    // Медленное 3D-вращение по всем осям — для обзора фигуры
                     _model.AngleXY += FigureSettings.BaseRotationSpeed * FigureSettings.AutoRotationSpeedXY;
                     _model.AngleXZ += FigureSettings.BaseRotationSpeed * FigureSettings.AutoRotationSpeedXZ;
                     _model.AngleYZ += FigureSettings.BaseRotationSpeed * FigureSettings.AutoRotationSpeedYZ;
+
                     if (!is3D)
                     {
-                        _model.AngleXW += FigureSettings.BaseRotationSpeed * FigureSettings.AutoRotationSpeedXW;
-                        _model.AngleYW += FigureSettings.BaseRotationSpeed * FigureSettings.AutoRotationSpeedYW;
+                        
                         _model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.AutoRotationSpeedZW;
+        
+                        
                     }
                     break;
                 case RotationMode.ManualDrag:
-                    // Обработка происходит в ApplyManualRotationDelta — см. ниже
+                    
                     break;
             }
 
@@ -106,7 +132,7 @@ namespace AxxonSoft_Prac
                 _model.AngleXY, _model.AngleXZ, _model.AngleXW,
                 _model.AngleYZ, _model.AngleYW, _model.AngleZW);
 
-            
+
             ApplyRotationMatrix(rotationMatrix, _model.GetInitialVertices(), _model.RotatedVertices);
         }
 
@@ -128,7 +154,7 @@ namespace AxxonSoft_Prac
             ApplyManualRotationDelta(
                 deltaXY: deltaXY,
                 deltaYZ: deltaYZ
-            
+
             );
         }
 
@@ -275,7 +301,7 @@ namespace AxxonSoft_Prac
         }
 
 
-        
+
 
         //Применение общей матрицы вращения к массиву вершин
         private void ApplyRotationMatrix(double[,] rotationMatrix, double[,] initialVertices, double[,] rotatedVertices)
@@ -287,7 +313,7 @@ namespace AxxonSoft_Prac
                 double z = initialVertices[i, 2];
                 double w = initialVertices[i, 3];
 
-               
+
                 rotatedVertices[i, 0] = rotationMatrix[0, 0] * x + rotationMatrix[0, 1] * y + rotationMatrix[0, 2] * z + rotationMatrix[0, 3] * w;
                 rotatedVertices[i, 1] = rotationMatrix[1, 0] * x + rotationMatrix[1, 1] * y + rotationMatrix[1, 2] * z + rotationMatrix[1, 3] * w;
                 rotatedVertices[i, 2] = rotationMatrix[2, 0] * x + rotationMatrix[2, 1] * y + rotationMatrix[2, 2] * z + rotationMatrix[2, 3] * w;

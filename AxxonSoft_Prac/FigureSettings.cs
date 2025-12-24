@@ -1,5 +1,6 @@
 ﻿using Avalonia.Media;
 using System;
+using System.Collections.Generic;
 
 namespace AxxonSoft_Prac
 {
@@ -67,7 +68,6 @@ namespace AxxonSoft_Prac
 
         // Чувствительность альтернативного режима
         public static double ManualDragAlternateSensitivity { get; set; } = 0.01;
-
-
+        
     }
 }

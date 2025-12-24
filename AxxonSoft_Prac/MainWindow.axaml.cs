@@ -28,8 +28,7 @@ namespace AxxonSoft_Prac
         private RadioButton _radioZ;
         private RadioButton _radioAuto;
         private RadioButton _radioManual;
-        private Button _btnStart;
-        private Button _btnStop;
+        private Button _btnTogglePlayPause;
         private Button _btnReset;
         private Slider _speedSlider;
         private Slider _sizeSlider;
@@ -55,6 +54,7 @@ namespace AxxonSoft_Prac
             bool uiLoadedSuccessfully = FindUIElements();
             if (uiLoadedSuccessfully)
             {
+                LoadFigureSelector();
                 LoadColorSelectors();
                 InitializeLogic();
                 SetupEventHandlers();
@@ -92,8 +92,7 @@ namespace AxxonSoft_Prac
             _radioZ = Require<RadioButton>("RadioZ");
             _radioAuto = Require<RadioButton>("RadioAuto");
             _radioManual = Require<RadioButton>("RadioManual");
-            _btnStart = Require<Button>("BtnStart");
-            _btnStop = Require<Button>("BtnStop");
+            _btnTogglePlayPause = Require<Button>("BtnTogglePlayPause");
             _btnReset = Require<Button>("BtnReset");
             _speedSlider = Require<Slider>("SpeedSlider");
             _sizeSlider = Require<Slider>("SizeSlider");
@@ -122,21 +121,17 @@ namespace AxxonSoft_Prac
 
         private void InitializeLogic()
         {
-            InitializeFigure("Tesseract"); // default figure
+            InitializeFigure(FigureCatalog.GetDefault()); // default figure
         }
 
-
-        private void InitializeFigure(string figureName)
+        
+        private void InitializeFigure(FigureType figureType)
         {
             // Clear Canvas
             _drawCanvas.Children.Clear();
 
             // Create model
-            _currentFigure = figureName switch
-            {
-                "Pyramid" => new PyramidModel(),
-                _ => new TesseractModel()
-            };
+            _currentFigure = FigureCatalog.Create(figureType);
 
             // Create calculator and renderer
             _rotationCalculator = new FigureRotationCalculator(_currentFigure);
@@ -160,8 +155,7 @@ namespace AxxonSoft_Prac
             //  Handlers of window_bounds
             _drawCanvas.PropertyChanged += DrawCanvas_PropertyChanged;
 
-            _btnStart.Click += BtnStart_Click;
-            _btnStop.Click += BtnStop_Click;
+            _btnTogglePlayPause.Click += BtnTogglePlayPause_Click;
             _btnReset.Click += BtnReset_Click;
 
             _radioX.Click += RadioX_Click;
@@ -207,18 +201,24 @@ namespace AxxonSoft_Prac
 
         private void UpdateUIForManualDragMode()
         {
-            _btnStart.IsEnabled = !_isInManualDragMode;
-            _btnStop.IsEnabled = !_isInManualDragMode;
-            _speedSlider.IsEnabled = !_isInManualDragMode;
-            _btnReset.IsEnabled = true;
+            _btnTogglePlayPause.IsEnabled = !_isInManualDragMode;
 
-            // cursor placement
             if (_isInManualDragMode)
             {
+                StopAnimationLoop();
+                _btnTogglePlayPause.Content = "Play";
                 _drawCanvas.Cursor = new Cursor(StandardCursorType.SizeAll);
             }
             else
             {
+                if (_isAnimating)
+                {
+                    _btnTogglePlayPause.Content = "Pause";
+                }
+                else
+                {
+                    _btnTogglePlayPause.Content = "Play";
+                }
                 _drawCanvas.Cursor = null;
             }
         }
@@ -252,15 +252,18 @@ namespace AxxonSoft_Prac
         }
 
 
-        private void BtnStart_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void BtnTogglePlayPause_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            StartAnimationLoop();
-        }
-
-
-        private void BtnStop_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            StopAnimationLoop();
+            if (_isAnimating)
+            {
+                StopAnimationLoop();
+                _btnTogglePlayPause.Content = "Play";
+            }
+            else
+            {
+                StartAnimationLoop();
+                _btnTogglePlayPause.Content = "Pause";
+            }
         }
 
 
@@ -376,6 +379,7 @@ namespace AxxonSoft_Prac
             }
         }
 
+        
         private void VertexColorSelector_SelectionChanged(object sender, Avalonia.Controls.SelectionChangedEventArgs e)
         {
             if (_vertexColorSelector.SelectedIndex >= 0)
@@ -467,6 +471,20 @@ namespace AxxonSoft_Prac
         }
 
 
+        private void LoadFigureSelector()
+        {
+            _figureSelector.Items.Clear();
+            foreach (var name in FigureCatalog.DisplayNames.Values)
+            {
+                _figureSelector.Items.Add(name);
+            }
+            _figureSelector.SelectedIndex = 0;
+        }
+        
+        
+        
+        
+        
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
@@ -496,6 +514,7 @@ namespace AxxonSoft_Prac
             }
         }
 
+        
         private void DrawCanvas_PointerMoved(object sender, PointerEventArgs e)
         {
             if (!_isInManualDragMode || !_isDragging) return;
@@ -517,6 +536,7 @@ namespace AxxonSoft_Prac
             _lastMousePosition = currentPos;
         }
 
+        
         private void DrawCanvas_PointerReleased(object sender, PointerReleasedEventArgs e)
         {
             if (_isDragging)
@@ -529,10 +549,12 @@ namespace AxxonSoft_Prac
 
         private void FigureSelector_SelectionChanged(object sender, Avalonia.Controls.SelectionChangedEventArgs e)
         {
-            if (_figureSelector.SelectedItem is ComboBoxItem item)
-            {
-                InitializeFigure(item.Content.ToString());
-            }
+            if (_figureSelector.SelectedIndex < 0) return;
+
+            var figureTypes = new List<FigureType>(FigureCatalog.DisplayNames.Keys);
+            FigureType selectedType = figureTypes[_figureSelector.SelectedIndex];
+
+            InitializeFigure(selectedType);
         }
 
 
