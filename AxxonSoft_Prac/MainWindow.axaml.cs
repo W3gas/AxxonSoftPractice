@@ -54,6 +54,7 @@ namespace AxxonSoft_Prac
             bool uiLoadedSuccessfully = FindUIElements();
             if (uiLoadedSuccessfully)
             {
+                ApplyTags();
                 LoadFigureSelector();
                 LoadColorSelectors();
                 InitializeLogic();
@@ -119,6 +120,16 @@ namespace AxxonSoft_Prac
         }
 
 
+        private void ApplyTags()
+        {
+            _radioX.Tag = RotationMode.ManualX;
+            _radioY.Tag = RotationMode.ManualY;
+            _radioZ.Tag = RotationMode.ManualZ;
+            _radioAuto.Tag = RotationMode.Auto;
+            _radioManual.Tag = RotationMode.ManualDrag;
+        }
+
+
         private void InitializeLogic()
         {
             InitializeFigure(FigureCatalog.GetDefault()); // default figure
@@ -158,11 +169,11 @@ namespace AxxonSoft_Prac
             _btnTogglePlayPause.Click += BtnTogglePlayPause_Click;
             _btnReset.Click += BtnReset_Click;
 
-            _radioX.Click += RadioX_Click;
-            _radioY.Click += RadioY_Click;
-            _radioZ.Click += RadioZ_Click;
-            _radioAuto.Click += RadioAuto_Click;
-            _radioManual.Click += RadioManual_Click;
+            _radioX.Click += RadioRotationMode_Click;
+            _radioY.Click += RadioRotationMode_Click;
+            _radioZ.Click += RadioRotationMode_Click;
+            _radioAuto.Click += RadioRotationMode_Click;
+            _radioManual.Click += RadioRotationMode_Click;
 
             _edgeColorSelector.SelectionChanged += EdgeColorSelector_SelectionChanged;
             _vertexColorSelector.SelectionChanged += VertexColorSelector_SelectionChanged;
@@ -185,14 +196,14 @@ namespace AxxonSoft_Prac
         private void SetSliderValuesFromSettings()
         {
             _speedSlider.Value = FigureSettings.BaseRotationSpeed;
-            _sizeSlider.Value = FigureSettings.TesseractBaseSize;
+            _sizeSlider.Value = FigureSettings.FigureBaseSize;
             _projectionDistSlider.Value = FigureSettings.ProjectionDistance;
             _projectionScaleSlider.Value = FigureSettings.ProjectionScale;
             _vertexSizeSlider.Value = FigureSettings.VertexSize;
 
             
             _speedValue.Text = FigureSettings.BaseRotationSpeed.ToString("F3");
-            _sizeValue.Text = FigureSettings.TesseractBaseSize.ToString("F0");
+            _sizeValue.Text = FigureSettings.FigureBaseSize.ToString("F0");
             _projectionDistValue.Text = FigureSettings.ProjectionDistance.ToString("F0");
             _projectionScaleValue.Text = FigureSettings.ProjectionScale.ToString("F0");
             _vertexSizeValue.Text = FigureSettings.VertexSize.ToString("F0");
@@ -274,63 +285,30 @@ namespace AxxonSoft_Prac
         }
 
 
-        private void RadioX_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+        private void RadioRotationMode_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            if (_radioX.IsChecked == true)
+            if (!(sender is RadioButton radioButton))
+                return;
+
+            if (radioButton.IsChecked == false)
+                return;
+            
+            if (radioButton.Tag is not RotationMode mode)
+                return; 
+
+            _rotationCalculator.CurrentMode = mode;
+
+            if (mode == RotationMode.ManualDrag)
             {
-                _rotationCalculator.CurrentMode = RotationMode.ManualX;
-                _isInManualDragMode = false;
-                UpdateUIForManualDragMode();
-            }    
-               
-        }
-
-
-        private void RadioY_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            if (_radioY.IsChecked == true)
-            {
-                _rotationCalculator.CurrentMode = RotationMode.ManualY;
-                _isInManualDragMode = false;
-                UpdateUIForManualDragMode();
-            }
-               
-        }
-
-
-        private void RadioZ_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            if (_radioZ.IsChecked == true)
-            {
-                _rotationCalculator.CurrentMode = RotationMode.ManualZ;
-                _isInManualDragMode = false;
-                UpdateUIForManualDragMode();
-            }
-               
-        }
-
-
-        private void RadioAuto_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            if (_radioAuto.IsChecked == true)
-            {
-                _rotationCalculator.CurrentMode = RotationMode.Auto;
-                _isInManualDragMode = false;
-                UpdateUIForManualDragMode();
-            }
-                 
-        }
-
-
-        private void RadioManual_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            if (_radioManual.IsChecked == true)
-            {
-                _rotationCalculator.CurrentMode = RotationMode.ManualDrag;
                 _isInManualDragMode = true;
                 StopAnimationLoop();
-                UpdateUIForManualDragMode();
             }
+            else
+            {
+                _isInManualDragMode = false;
+            }
+
+            UpdateUIForManualDragMode();
         }
 
 
@@ -413,7 +391,7 @@ namespace AxxonSoft_Prac
             else if (newValue > FigureSettings.MaxTesseractSize)
                 newValue = FigureSettings.MaxTesseractSize;
 
-            FigureSettings.TesseractBaseSize = newValue;
+            FigureSettings.FigureBaseSize = newValue;
             if (_sizeValue != null)
                 _sizeValue.Text = newValue.ToString("F0");
 

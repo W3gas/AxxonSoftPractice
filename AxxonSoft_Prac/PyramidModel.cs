@@ -28,7 +28,7 @@ namespace AxxonSoft_Prac
 
         private void InitializeVertices()
         {
-            double s = FigureSettings.TesseractBaseSize;
+            double s = FigureSettings.FigureBaseSize;
             double height = s * 1.5; // высота пирамиды
 
             // Основание (квадрат в плоскости Z = -s)

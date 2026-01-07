@@ -44,9 +44,7 @@ namespace AxxonSoft_Prac
                     }
                     else
                     {
-                        // В 4D: вращение в плоскости XW — даёт "выдвижение" по оси X, как в гифках
-                        _model.AngleXW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
-                        //_model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                        _model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier * FigureSettings.Factor4DRotation;
                         _model.AngleYZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;  //3d integration
                     }
                     break;
@@ -59,9 +57,7 @@ namespace AxxonSoft_Prac
                     }
                     else
                     {
-                        // В 4D: вращение в плоскости YW — связано с осью Y
-                        //_model.AngleYW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
-                        _model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
+                        _model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier * FigureSettings.Factor4DRotation;
                         _model.AngleXZ += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;  //3d integration
                     }
                     break;
@@ -74,9 +70,7 @@ namespace AxxonSoft_Prac
                     }
                     else
                     {
-                        // В 4D: вращение в плоскости ZW — связано с осью Z
                         _model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;
-                        //_model.AngleXY += FigureSettings.BaseRotationSpeed * FigureSettings.ManualRotationMultiplier;  //3d integration
                     }
                     break;
                 case RotationMode.Auto:
@@ -87,10 +81,7 @@ namespace AxxonSoft_Prac
 
                     if (!is3D)
                     {
-                        
                         _model.AngleZW += FigureSettings.BaseRotationSpeed * FigureSettings.AutoRotationSpeedZW;
-        
-                        
                     }
                     break;
                 case RotationMode.ManualDrag:
@@ -146,14 +137,14 @@ namespace AxxonSoft_Prac
             double s = FigureSettings.ManualDragSensitivity;
 
             // asimut
-            double deltaXY = deltaX * s;
+            double deltaXZ = deltaX * s;
 
             // elewation
             double deltaYZ = -deltaY * s;
 
             ApplyManualRotationDelta(
-                deltaXY: deltaXY,
-                deltaYZ: deltaYZ
+                deltaYZ: deltaYZ,
+                deltaXZ: deltaXZ
 
             );
         }
@@ -166,17 +157,10 @@ namespace AxxonSoft_Prac
                 return;
 
             double s = FigureSettings.ManualDragAlternateSensitivity;
-
-            // Основные 4D-плоскости
-            double deltaXW = deltaX * s;       // горизонт → XW
-
-            // Вертикаль → сразу две плоскости с разным фазовым сдвигом
-            double deltaYW = -deltaY * s;      // YW (инверсия, как в 3D)
-            double deltaZW = deltaY * s; // ZW — с ослаблением и без инверсии
-
+            
+            double deltaZW = deltaX * s;
+            
             ApplyManualRotationDelta(
-                deltaXW: deltaXW,
-                deltaYW: deltaYW,
                 deltaZW: deltaZW
             );
         }
@@ -186,18 +170,13 @@ namespace AxxonSoft_Prac
         {
             return Math.IEEERemainder(angle, 2 * Math.PI);
         }
-
-
-        // Порядок умножения: R_ZW * R_YW * R_YZ * R_XW * R_XZ * R_XY
+        
         private double[,] CalculateRotationMatrix( double angleXY, double angleXZ, double angleXW,
                                                    double angleYZ, double angleYW, double angleZW)
         {
             //  identity matrix
             double[,] m = IdentityMatrix4D();
-
-            //  Turn right: m = m * R
-            //  Order: R_XY → R_XZ → R_XW → R_YZ → R_YW → R_ZW
-
+            
             ApplyRotationXY(ref m, angleXY);
             ApplyRotationXZ(ref m, angleXZ);
             ApplyRotationXW(ref m, angleXW);
@@ -213,8 +192,7 @@ namespace AxxonSoft_Prac
         {
             double cosA = Math.Cos(angle);
             double sinA = Math.Sin(angle);
-            // Применяем: m = m * R_XY
-            // R_XY затрагивает столбцы 0 (X) и 1 (Y)
+            
             for (int i = 0; i < 4; i++)
             {
                 double x = m[i, 0];

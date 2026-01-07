@@ -32,10 +32,10 @@ namespace AxxonSoft_Prac
                     for (int k = 0; k < 2; k++)
                         for (int l = 0; l < 2; l++)
                         {
-                            _initialVertices[index, 0] = (i * 2 - 1) * FigureSettings.TesseractBaseSize;
-                            _initialVertices[index, 1] = (j * 2 - 1) * FigureSettings.TesseractBaseSize;
-                            _initialVertices[index, 2] = (k * 2 - 1) * FigureSettings.TesseractBaseSize;
-                            _initialVertices[index, 3] = (l * 2 - 1) * FigureSettings.TesseractBaseSize;
+                            _initialVertices[index, 0] = (i * 2 - 1) * FigureSettings.FigureBaseSize;
+                            _initialVertices[index, 1] = (j * 2 - 1) * FigureSettings.FigureBaseSize;
+                            _initialVertices[index, 2] = (k * 2 - 1) * FigureSettings.FigureBaseSize;
+                            _initialVertices[index, 3] = (l * 2 - 1) * FigureSettings.FigureBaseSize;
                             index++;
                         }
         }

@@ -22,6 +22,7 @@ namespace AxxonSoft_Prac
         public static double AutoRotationSpeedYZ { get; set; } = 1.1;
         public static double AutoRotationSpeedYW { get; set; } = 0.9;
         public static double AutoRotationSpeedZW { get; set; } = 0.7;
+        public static double Factor4DRotation { get; set; } = 0.5; 
 
         // Параметры проекции
         public static double ProjectionDistance { get; set; } = 400.0;
@@ -38,8 +39,8 @@ namespace AxxonSoft_Prac
 
 
 
-        // Базовый размер тессеракта (половина длины стороны в 4D)
-        public static double TesseractBaseSize { get; set; } = 100.0;
+        // Базовый размер фигуры (половина длины стороны в 4D)
+        public static double FigureBaseSize { get; set; } = 100.0;
 
         // Палитры цветов для кнопок
         public static Color[] EdgeColorPalette { get; } = { Colors.Cyan, Colors.Red, Colors.Green, Colors.Blue, Colors.Magenta, Colors.Gold };
@@ -57,14 +58,10 @@ namespace AxxonSoft_Prac
         public const double MinVertexSize = 2.0;
         public const double MaxVertexSize = 12.0;
 
-
-
+        
         // Чувствительность ручного вращения (в радианах на пиксель)
         public static double ManualDragSensitivity { get; set; } = 0.01;
-
-        // Коэффициенты для 4D-компонент в основном режиме (относительно основного)
-        public static double ManualDragZWFactor { get; set; } = 0.7;
-        public static double ManualDragYWFactor { get; set; } = 0.7;
+        
 
         // Чувствительность альтернативного режима
         public static double ManualDragAlternateSensitivity { get; set; } = 0.01;
