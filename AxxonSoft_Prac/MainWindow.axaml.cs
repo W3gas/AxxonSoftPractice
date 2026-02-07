@@ -13,11 +13,11 @@ namespace AxxonSoft_Prac
         private FigureModel4D _currentFigure;
         private FigureRotationCalculator _rotationCalculator;
         private FigureRenderer _renderer;
+        private Point _lastMousePosition;
 
         // --- Bool elements ---
         private bool _isInManualDragMode = false;
         private bool _isDragging = false;
-        private Point _lastMousePosition;
         private bool _isShiftPressed = false;
         private bool _isAnimating = false;
 
@@ -39,7 +39,7 @@ namespace AxxonSoft_Prac
         private ComboBox _vertexColorSelector;
         private ComboBox _figureSelector;
 
-        // Text blocks
+        // -- Text blocks --
         private TextBlock _speedValue;
         private TextBlock _sizeValue;
         private TextBlock _projectionDistValue;

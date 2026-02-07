@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AxxonSoft_Prac
 {
@@ -47,6 +48,7 @@ namespace AxxonSoft_Prac
             return Create(GetDefault());
         }
 
-        public static FigureType GetDefault() => FigureType.Tesseract;
+       
+        public static FigureType GetDefault() => _displayNames.Keys.First();
     }
 }
